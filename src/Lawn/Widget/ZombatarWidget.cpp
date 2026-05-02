@@ -245,7 +245,7 @@ static Image* GetCategoryButtonOver(int category)
 }
 
 static int gCategoryItemCounts[NUM_ZOMBATAR_CATEGORIES] = {
-	1, 16, 24, 14, 16, 12, 16, 14, 5
+	12, 16, 24, 14, 16, 12, 16, 14, 5
 };
 
 static int gCategoryColorSets[NUM_ZOMBATAR_CATEGORIES] = {
@@ -337,20 +337,20 @@ static constexpr int GRID_SPACING = 120;
 static constexpr int GRID_COLS = 3;
 static constexpr int GRID_SLOTS = 9;
 
-static constexpr int BACK_BTN_X = 23;
-static constexpr int BACK_BTN_Y = 528;
+static constexpr int BACK_BTN_X = 150;
+static constexpr int BACK_BTN_Y = 359;
 
-static constexpr int FINISHED_BTN_X = 667;
-static constexpr int FINISHED_BTN_Y = 528;
+static constexpr int FINISHED_BTN_X = 642;
+static constexpr int FINISHED_BTN_Y = 359;
 
-static constexpr int NEW_ZOMBIE_BTN_X = 23;
-static constexpr int NEW_ZOMBIE_BTN_Y = 500;
+static constexpr int NEW_ZOMBIE_BTN_X = 253;
+static constexpr int NEW_ZOMBIE_BTN_Y = 464;
 
-static constexpr int PREV_BTN_X = 195;
-static constexpr int PREV_BTN_Y = 540;
+static constexpr int PREV_BTN_X = 95;
+static constexpr int PREV_BTN_Y = 373;
 
-static constexpr int NEXT_BTN_X = 575;
-static constexpr int NEXT_BTN_Y = 540;
+static constexpr int NEXT_BTN_X = 682;
+static constexpr int NEXT_BTN_Y = 373;
 
 static constexpr int PREVIEW_X = 600;
 static constexpr int PREVIEW_Y = 80;
@@ -402,9 +402,9 @@ ZombatarWidget::ZombatarWidget(LawnApp* theApp)
 	mNewZombieButton->Resize(NEW_ZOMBIE_BTN_X, NEW_ZOMBIE_BTN_Y, 234, 39);
 
 	mDeleteButton = MakeNewButton(Zombatar_Delete, this, "", nullptr,
-		IMAGE_ZOMBATAR_ACCEPT_BUTTON, IMAGE_ZOMBATAR_ACCEPT_BUTTON_HIGHLIGHT,
-		IMAGE_ZOMBATAR_ACCEPT_BUTTON_HIGHLIGHT);
-	mDeleteButton->Resize(270, 500, 98, 26);
+		IMAGE_ZOMBATAR_BEGIN_BUTTON, IMAGE_ZOMBATAR_BEGIN_BUTTON_HIGHLIGHT,
+		IMAGE_ZOMBATAR_BEGIN_BUTTON_HIGHLIGHT);
+	mDeleteButton->Resize(253, 464, 98, 26);
 
 	mPrevButton = MakeNewButton(Zombatar_PrevPage, this, "", nullptr,
 		IMAGE_ZOMBATAR_PREV_BUTTON, IMAGE_ZOMBATAR_PREV_BUTTON_HIGHLIGHT,
@@ -416,22 +416,17 @@ ZombatarWidget::ZombatarWidget(LawnApp* theApp)
 		IMAGE_ZOMBATAR_NEXT_BUTTON_HIGHLIGHT);
 	mNextButton->Resize(NEXT_BTN_X, NEXT_BTN_Y, 33, 38);
 
-	static constexpr int gCategoryButtonOrder[NUM_ZOMBATAR_CATEGORIES] = {
-		0, 5, 4, 2, 6, 1, 3, 7, 8
-	};
-
 	int aCatY = CATEGORY_BTN_Y0;
 	for (int i = 0; i < NUM_ZOMBATAR_CATEGORIES; i++)
 	{
-		int aCategory = gCategoryButtonOrder[i];
-		Image* aOverImage = GetCategoryButtonOver(aCategory);
+		Image* aOverImage = GetCategoryButtonOver(i);
 		if (aOverImage == nullptr)
-			aOverImage = GetCategoryButtonHighlight(aCategory);
+			aOverImage = GetCategoryButtonHighlight(i);
 
-		mCategoryButtons[aCategory] = MakeNewButton(
-			Zombatar_CategoryBase + aCategory, this, "", nullptr,
-			GetCategoryButtonImage(aCategory), GetCategoryButtonHighlight(aCategory), aOverImage);
-		mCategoryButtons[aCategory]->Resize(CATEGORY_BTN_X, aCatY, CATEGORY_BTN_W, CATEGORY_BTN_H);
+		mCategoryButtons[i] = MakeNewButton(
+			Zombatar_CategoryBase + i, this, "", nullptr,
+			GetCategoryButtonImage(i), GetCategoryButtonHighlight(i), aOverImage);
+		mCategoryButtons[i]->Resize(CATEGORY_BTN_X, aCatY, CATEGORY_BTN_W, CATEGORY_BTN_H);
 
 		if (i == 0)
 			aCatY += CATEGORY_BTN_H + CATEGORY_FIRST_GAP;
@@ -514,15 +509,17 @@ void ZombatarWidget::DrawCategoryButtons(Graphics* theG)
 {
 	for (int i = 0; i < NUM_ZOMBATAR_CATEGORIES; i++)
 	{
-		bool isSelected = (mCurrentCategory == i);
-		if (isSelected)
-		{
-			theG->SetColorizeImages(true);
-			theG->SetColor(Color(200, 200, 200));
-		}
 		mCategoryButtons[i]->Draw(theG);
-		if (isSelected)
-			theG->SetColorizeImages(false);
+	}
+	for (int i = 0; i < NUM_ZOMBATAR_CATEGORIES; i++)
+	{
+		if (mCurrentCategory == i)
+		{
+			Image* aHighlight = GetCategoryButtonHighlight(i);
+			if (aHighlight)
+				theG->DrawImage(aHighlight,
+					mCategoryButtons[i]->mX, mCategoryButtons[i]->mY);
+		}
 	}
 }
 
@@ -674,8 +671,9 @@ void ZombatarWidget::AddedToManager(WidgetManager* theWidgetManager)
 	for (int i = 0; i < NUM_ZOMBATAR_CATEGORIES; i++)
 		AddWidget(mCategoryButtons[i]);
 
-	for (int i = 0; i < 9; i++)
-		AddWidget(mAccessoryButtons[i]);
+	if (mCurrentCategory != ZOMBATAR_CATEGORY_SKIN)
+		for (int i = 0; i < 9; i++)
+			AddWidget(mAccessoryButtons[i]);
 }
 
 void ZombatarWidget::RemovedFromManager(WidgetManager* theWidgetManager)
@@ -809,8 +807,20 @@ void ZombatarWidget::ButtonDepress(int theId)
 
 	if (theId >= Zombatar_CategoryBase && theId < static_cast<int>(Zombatar_CategoryBase) + NUM_ZOMBATAR_CATEGORIES)
 	{
+		int aOldCategory = mCurrentCategory;
 		mCurrentCategory = theId - Zombatar_CategoryBase;
 		mCurrentPage = 0;
+
+		if (aOldCategory == ZOMBATAR_CATEGORY_SKIN && mCurrentCategory != ZOMBATAR_CATEGORY_SKIN)
+		{
+			for (int i = 0; i < 9; i++)
+				mWidgetManager->AddWidget(mAccessoryButtons[i]);
+		}
+		else if (aOldCategory != ZOMBATAR_CATEGORY_SKIN && mCurrentCategory == ZOMBATAR_CATEGORY_SKIN)
+		{
+			for (int i = 0; i < 9; i++)
+				mWidgetManager->RemoveWidget(mAccessoryButtons[i]);
+		}
 		return;
 	}
 
@@ -921,8 +931,27 @@ void ZombatarWidget::MouseDown(int theX, int theY, int theClickCount)
 			}
 		}
 
-		// Click outside color picker closes it
 		mState = State::MAIN;
+		return;
+	}
+
+	if (mCurrentCategory == ZOMBATAR_CATEGORY_SKIN)
+	{
+		int aStartIdx = mCurrentPage * 9;
+		int aEndIdx = std::min(aStartIdx + 9, gCategoryItemCounts[ZOMBATAR_CATEGORY_SKIN]);
+		for (int i = aStartIdx; i < aEndIdx; i++)
+		{
+			int aLocalIdx = i - aStartIdx;
+			int aX = GRID_X + (aLocalIdx % GRID_COLS) * GRID_SPACING;
+			int aY = GRID_Y + (aLocalIdx / GRID_COLS) * GRID_SPACING;
+			if (theX >= aX && theX < aX + GRID_CELL && theY >= aY && theY < aY + GRID_CELL)
+			{
+				mCurrentHead.mSkinColor = i;
+				mNeedToSave = true;
+				mApp->PlaySample(Sexy::SOUND_BUTTONCLICK);
+				return;
+			}
+		}
 	}
 }
 

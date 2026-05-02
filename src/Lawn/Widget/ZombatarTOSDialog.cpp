@@ -118,7 +118,7 @@ void ZombatarTOSDialog::AddedToManager(WidgetManager* theWidgetManager)
 	{
 		mSlider = new Slider(IMAGE_ZOMBATAR_TOS_SLIDER, IMAGE_ZOMBATAR_TOS_SLIDER_THUMB, 0, this);
 		mSlider->Resize(TOS_TEXT_AREA_X + TOS_TEXT_AREA_W + 6, TOS_TEXT_AREA_Y, 20, mTextClipHeight);
-		theWidgetManager->AddWidget(mSlider);
+		AddWidget(mSlider);
 	}
 }
 
@@ -128,7 +128,7 @@ void ZombatarTOSDialog::RemovedFromManager(WidgetManager* theWidgetManager)
 	if (mAcceptButton) RemoveWidget(mAcceptButton);
 	if (mSlider)
 	{
-		theWidgetManager->RemoveWidget(mSlider);
+		RemoveWidget(mSlider);
 		delete mSlider;
 		mSlider = nullptr;
 	}

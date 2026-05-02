@@ -356,9 +356,9 @@ GameSelector::GameSelector(LawnApp* theApp)
 	mDestX = 0;
 	mDestY = 0;
 	mZombatarWidget = new ZombatarWidget(this->mApp);
-	mZombatarWidget->Move(0, mApp->mHeight);
+	mZombatarWidget->Move(mApp->mWidth, 0);
 	mAchievementsWidget = new AchievementsWidget(this->mApp);
-	mAchievementsWidget->Move(0, mApp->mHeight);
+	mAchievementsWidget->Move(mApp->mWidth, mApp->mHeight);
 
 	TodHesitationTrace("gameselectorinit");
 }
@@ -790,7 +790,8 @@ void GameSelector::Update()
 
 		// @Patoke: not from the original binaries but fixes bugs
 		mOverlayWidget->Move(aNewX, aNewY);
-		mZombatarWidget->mY = aNewY + mApp->mHeight - 1;
+		mZombatarWidget->mX = aNewX + mApp->mWidth;
+		mAchievementsWidget->mX = aNewX + mApp->mWidth - 1;
 		mAchievementsWidget->mY = aNewY + mApp->mHeight - 1;
 		mAdventureButton->SetOffset(aNewX, aNewY);
 		mMinigameButton->SetOffset(aNewX, aNewY);
@@ -1500,12 +1501,12 @@ void GameSelector::SlideTo(int theX, int theY) {
 }
 
 void GameSelector::ShowAchievementsScreen() {
-	SlideTo(0, -mApp->mHeight);
+	SlideTo(-mApp->mWidth, -mApp->mHeight);
 	mWidgetManager->SetFocus(mAchievementsWidget);
 }
 
 void GameSelector::ShowZombatarScreen() {
-	SlideTo(0, -mApp->mHeight);
+	SlideTo(-mApp->mWidth, 0);
 	mZombatarWidget->EnterEditor();
 	mWidgetManager->SetFocus(mZombatarWidget);
 }
