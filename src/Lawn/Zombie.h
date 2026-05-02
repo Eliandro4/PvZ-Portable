@@ -144,6 +144,8 @@ public:
     bool                            mMindControlled;
     bool                            mBlowingAway;
     bool                            mHasHead;
+    bool                            mHasZombatarHead;
+    int32_t                         mZombatarHeadIndex;
     bool                            mHasArm;
     bool                            mHasObject;
     bool                            mInPool;
@@ -402,6 +404,7 @@ public:
     bool                            IsFireResistant();
     /*inline*/ void                 EnableMustache(bool theEnableMustache);
     /*inline*/ void                 EnableFuture(bool theEnableFuture);
+    void                            ApplyZombatarHead();
     /*inline*/ void                 EnableDance();
     void                            BungeeDropPlant();
     void                            RemoveButter();

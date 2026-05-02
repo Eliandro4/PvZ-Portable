@@ -32,6 +32,7 @@
 #include "../Resources.h"
 #include "System/Music.h"
 #include "Widget/AlmanacDialog.h"
+#include "System/ZombatarComposer.h"
 #include "../Sexy.TodLib/TodFoley.h"
 #include "../Sexy.TodLib/TodDebug.h"
 #include "../Sexy.TodLib/TodCommon.h"
@@ -979,6 +980,12 @@ void Zombie::LoadPlainZombieReanim()
         ReanimIgnoreClipRect("Zombie_innerarm3", true);
         SetupWaterTrack("Zombie_whitewater");
         SetupWaterTrack("Zombie_whitewater2");
+    }
+
+    if (mBoard && mApp->mPlayerInfo && mApp->mPlayerInfo->mZombatarHeadCount > 0 &&
+        !IsZombotany(mZombieType) && mHelmType == HelmType::HELMTYPE_NONE && mHasHead)
+    {
+        ApplyZombatarHead();
     }
 }
 
@@ -10507,7 +10514,7 @@ void Zombie::EnableMustache(bool theEnableMustache)
     if (mFromWave == Zombie::ZOMBIE_WAVE_UI)
         return;
 
-    if (!mHasHead || Zombie::IsZombotany(mZombieType))
+    if (!mHasHead || Zombie::IsZombotany(mZombieType) || mHasZombatarHead)
         return;
 
     Reanimation* aBodyReanim = mApp->ReanimationTryToGet(mBodyReanimID);
@@ -10533,7 +10540,7 @@ void Zombie::EnableMustache(bool theEnableMustache)
 
 void Zombie::EnableFuture(bool theEnableFuture)
 {
-    if (mFromWave == Zombie::ZOMBIE_WAVE_UI || Zombie::IsZombotany(mZombieType))
+    if (mFromWave == Zombie::ZOMBIE_WAVE_UI || Zombie::IsZombotany(mZombieType) || mHasZombatarHead)
         return;
 
     Reanimation* aBodyReanim = mApp->ReanimationTryToGet(mBodyReanimID);
@@ -10557,6 +10564,31 @@ void Zombie::EnableFuture(bool theEnableFuture)
     {
         aBodyReanim->SetImageOverride("anim_head1", nullptr);
     }
+}
+
+void Zombie::ApplyZombatarHead()
+{
+    if (mApp->mPlayerInfo->mZombatarHeadCount == 0)
+        return;
+
+    int headIdx = mBoard->mZombatarHeadIndex++;
+    headIdx %= mApp->mPlayerInfo->mZombatarHeadCount;
+
+    const ZombatarHead* head = mApp->mPlayerInfo->GetZombatarHead(headIdx);
+    if (!head)
+        return;
+
+    Image* headImage = mApp->mZombatarComposer->GetHeadImage(*head);
+
+    Reanimation* bodyReanim = mApp->ReanimationGet(mBodyReanimID);
+    if (!bodyReanim)
+        return;
+
+    bodyReanim->SetImageOverride("anim_head1", headImage);
+    ReanimShowPrefix("anim_hair", RENDER_GROUP_HIDDEN);
+
+    mHasZombatarHead = true;
+    mZombatarHeadIndex = headIdx;
 }
 
 void Zombie::EnableDance()

@@ -48,6 +48,7 @@
 #include "Lawn/Widget/StoreScreen.h"
 #include "Lawn/Widget/CheatDialog.h"
 #include "Lawn/Widget/GameSelector.h"
+#include "Lawn/Widget/ZombatarWidget.h"
 #include "Lawn/Widget/CreditScreen.h"
 #include "Sexy.TodLib/EffectSystem.h"
 #include "Sexy.TodLib/FilterEffect.h"
@@ -57,6 +58,7 @@
 #include "Lawn/Widget/NewUserDialog.h"
 #include "Lawn/Widget/ContinueDialog.h"
 #include "Lawn/System/ReanimationLawn.h"
+#include "Lawn/System/ZombatarComposer.h"
 #include "Lawn/Widget/ChallengeScreen.h"
 #include "Lawn/Widget/NewOptionsDialog.h"
 #include "Lawn/Widget/SeedChooserScreen.h"
@@ -137,6 +139,7 @@ LawnApp::LawnApp()
 	mZenGarden = nullptr;
 	mEffectSystem = nullptr;
 	mReanimatorCache = nullptr;
+	mZombatarComposer = nullptr;
 	mCloseRequest = false;
 	mWidth = BOARD_WIDTH/IMG_DOWNSCALE;
 	mHeight = BOARD_HEIGHT/IMG_DOWNSCALE;
@@ -291,6 +294,13 @@ LawnApp::~LawnApp()
 	{
 		mReanimatorCache->ReanimatorCacheDispose();
 		delete mReanimatorCache;
+	}
+
+	if (mZombatarComposer)
+	{
+		mZombatarComposer->Dispose();
+		delete mZombatarComposer;
+		mZombatarComposer = nullptr;
 	}
 
 	FilterEffectDisposeForApp();
@@ -555,6 +565,19 @@ void LawnApp::KillGameSelector()
 		SafeDeleteWidget(mGameSelector);
 		mGameSelector = nullptr;
 	}
+}
+
+void LawnApp::ShowZombatarTOS()
+{
+	LawnDialog* aDialog = new LawnDialog(
+		this,
+		Dialogs::DIALOG_ZOMBATAR_TOS,
+		true,
+		"[ZOMBATAR_TOS_HEADER]",
+		"[ZOMBATAR_TOS]",
+		"",
+		Dialog::BUTTONS_OK_CANCEL);
+	AddDialog(Dialogs::DIALOG_ZOMBATAR_TOS, aDialog);
 }
 
 // GOTY @Patoke: 0x452CB0
@@ -1741,6 +1764,7 @@ void LawnApp::LoadingThreadProc()
 		return;
 
 	TodStringListLoad("Properties/LawnStrings.txt");
+	TodStringListLoad("Properties/ZombatarTOS.txt");
 
 	// Load localized properties AFTER LawnStrings so they can override string values
 	LoadProperties("properties/default.xml", false, false);
@@ -1786,6 +1810,8 @@ void LawnApp::LoadingThreadProc()
 	mZenGarden = new ZenGarden();
 	mReanimatorCache = new ReanimatorCache();
 	mReanimatorCache->ReanimatorCacheInitialize();
+	mZombatarComposer = new ZombatarComposer();
+	mZombatarComposer->Initialize();
 	TodFoleyInitialize(gLawnFoleyParamArray, LENGTH(gLawnFoleyParamArray));
 
 	TodTrace("loading '%s' %d ms", "stuff", static_cast<int>(aTimer.GetDuration()));
@@ -1998,6 +2024,13 @@ void LawnApp::ButtonDepress(int theId)
 			FinishTimesUpDialog();
 			return;
 
+		case Dialogs::DIALOG_ZOMBATAR_TOS:
+			KillDialog(Dialogs::DIALOG_ZOMBATAR_TOS);
+			mPlayerInfo->mZombatarAccepted = 1;
+			mPlayerInfo->SaveDetails();
+			mGameSelector->ShowZombatarScreen();
+			return;
+
 		case 20008:
 			KillDialog(20008);
 			KillDialog(Dialogs::DIALOG_CHECKING_UPDATES);
@@ -2044,6 +2077,10 @@ void LawnApp::ButtonDepress(int theId)
 
 		case Dialogs::DIALOG_TIMESUP:
 			FinishTimesUpDialog();
+			return;
+
+		case Dialogs::DIALOG_ZOMBATAR_TOS:
+			KillDialog(Dialogs::DIALOG_ZOMBATAR_TOS);
 			return;
 
 		case 10008:

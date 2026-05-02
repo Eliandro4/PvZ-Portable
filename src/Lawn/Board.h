@@ -219,6 +219,7 @@ public:
 	bool							mMustacheMode;
 	bool							mSuperMowerMode;
 	bool							mFutureMode;
+	int32_t							mZombatarHeadIndex;
 	bool							mPinataMode;
 	bool							mDanceMode;
 	bool							mDaisyMode;

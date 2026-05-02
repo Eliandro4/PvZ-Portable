@@ -63,6 +63,28 @@ public:
     void                InitializePottedPlant(SeedType theSeedType);
 };
 
+struct ZombatarHead
+{
+    uint32_t mUnknown;
+    uint32_t mSkinColor;
+    uint32_t mClothesType;
+    uint32_t mClothesColor;
+    uint32_t mTidbitsType;
+    uint32_t mTidbitsColor;
+    uint32_t mAccessoryType;
+    uint32_t mAccessoryColor;
+    uint32_t mFacialHairType;
+    uint32_t mFacialHairColor;
+    uint32_t mHairType;
+    uint32_t mHairColor;
+    uint32_t mEyewearType;
+    uint32_t mEyewearColor;
+    uint32_t mHatType;
+    uint32_t mHatColor;
+    uint32_t mBackdropType;
+    uint32_t mBackdropColor;
+};
+
 class DataSync;
 class PlayerInfo
 {
@@ -118,6 +140,21 @@ public:
     inline int          GetLevel() const { return mLevel; }
     inline void         SetLevel(int theLevel) { mLevel = theLevel; }
     /*inline*/ void     ResetChallengeRecord(GameMode theGameMode);
+
+    inline const ZombatarHead* GetZombatarHead(uint32_t theIndex) const {
+        if (theIndex >= mZombatarHeadCount) return nullptr;
+        return reinterpret_cast<const ZombatarHead*>(
+            mZombatarData.data() + theIndex * sizeof(ZombatarHead));
+    }
+
+    inline ZombatarHead* GetZombatarHeadWritable(uint32_t theIndex) {
+        if (theIndex >= mZombatarHeadCount) return nullptr;
+        return reinterpret_cast<ZombatarHead*>(
+            mZombatarData.data() + theIndex * sizeof(ZombatarHead));
+    }
+
+    uint32_t AddZombatarHead(const ZombatarHead& theHead);
+    void DeleteZombatarHead(uint32_t theIndex);
 };
 
 #endif

@@ -170,6 +170,7 @@ Board::Board(LawnApp* theApp)
 	mMustacheMode = mApp->mMustacheMode;
 	mSuperMowerMode = mApp->mSuperMowerMode;
 	mFutureMode = mApp->mFutureMode;
+	mZombatarHeadIndex = 0;
 	mPinataMode = mApp->mPinataMode;
 	mDanceMode = mApp->mDanceMode;
 	mDaisyMode = mApp->mDaisyMode;

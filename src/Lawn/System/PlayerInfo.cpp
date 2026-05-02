@@ -59,6 +59,18 @@ static inline void PottedPlantFromLE(PottedPlant& p)
 // ToLE is identical to FromLE for byte swapping (both swap on big-endian, no-op on little-endian)
 static inline void PottedPlantToLE(PottedPlant& p) { PottedPlantFromLE(p); }
 
+static inline void ZombatarHeadFromLE(ZombatarHead& h)
+{
+	if constexpr (std::endian::native == std::endian::little)
+		return;
+
+	uint32_t* fields = reinterpret_cast<uint32_t*>(&h);
+	for (int i = 0; i < 18; i++)
+		fields[i] = FromLE32(fields[i]);
+}
+
+static inline void ZombatarHeadToLE(ZombatarHead& h) { ZombatarHeadFromLE(h); }
+
 PlayerInfo::PlayerInfo()
 {
 	Reset();
@@ -141,20 +153,34 @@ void PlayerInfo::SyncDetails(DataSync& theSync)
 		}
 	}
 
-	// Zombatar is not supported: ignore any stored data on load.
-	if (theSync.GetReader())
-	{
-		mZombatarAccepted = 0;
-		mZombatarHeadCount = 0;
-		mZombatarData.clear();
-		memset(mZombatarTrailingUnknown, 0, sizeof(mZombatarTrailingUnknown));
-		mZombatarCreatedBefore = 0;
-		return;
-	}
-
-	// Write a minimal, safe layout (no Zombatars).
 	theSync.SyncUInt8(mZombatarAccepted);
 	theSync.SyncUInt32(mZombatarHeadCount);
+
+	TOD_ASSERT(mZombatarHeadCount <= 100);
+
+	if (theSync.GetReader())
+	{
+		mZombatarData.resize(static_cast<size_t>(mZombatarHeadCount) * sizeof(ZombatarHead));
+		for (uint32_t i = 0; i < mZombatarHeadCount; i++)
+		{
+			ZombatarHead* head = reinterpret_cast<ZombatarHead*>(
+				mZombatarData.data() + i * sizeof(ZombatarHead));
+			theSync.SyncBytes(head, sizeof(ZombatarHead));
+			ZombatarHeadFromLE(*head);
+		}
+	}
+	else if (theSync.GetWriter())
+	{
+		TOD_ASSERT(mZombatarData.size() == mZombatarHeadCount * sizeof(ZombatarHead));
+		for (uint32_t i = 0; i < mZombatarHeadCount; i++)
+		{
+			ZombatarHead head;
+			memcpy(&head, mZombatarData.data() + i * sizeof(ZombatarHead), sizeof(ZombatarHead));
+			ZombatarHeadToLE(head);
+			theSync.SyncBytes(&head, sizeof(ZombatarHead));
+		}
+	}
+
 	theSync.SyncBytes(mZombatarTrailingUnknown, sizeof(mZombatarTrailingUnknown));
 	theSync.SyncUInt8(mZombatarCreatedBefore);
 }
@@ -265,6 +291,36 @@ void PlayerInfo::ResetChallengeRecord(GameMode theGameMode)
 	int aGameMode = static_cast<int>(theGameMode) - static_cast<int>(GameMode::GAMEMODE_SURVIVAL_NORMAL_STAGE_1);
 	TOD_ASSERT(aGameMode >= 0 && aGameMode <= NUM_CHALLENGE_MODES);
 	mChallengeRecords[aGameMode] = 0;
+}
+
+uint32_t PlayerInfo::AddZombatarHead(const ZombatarHead& theHead)
+{
+	if (mZombatarHeadCount >= 100)
+		return static_cast<uint32_t>(-1);
+
+	uint32_t aIndex = mZombatarHeadCount;
+	mZombatarData.resize(mZombatarData.size() + sizeof(ZombatarHead));
+	ZombatarHead* aDest = reinterpret_cast<ZombatarHead*>(
+		mZombatarData.data() + aIndex * sizeof(ZombatarHead));
+	memcpy(aDest, &theHead, sizeof(ZombatarHead));
+	mZombatarHeadCount++;
+	mZombatarCreatedBefore = 1;
+	return aIndex;
+}
+
+void PlayerInfo::DeleteZombatarHead(uint32_t theIndex)
+{
+	if (theIndex >= mZombatarHeadCount)
+		return;
+
+	size_t aOffset = theIndex * sizeof(ZombatarHead);
+	size_t aRemaining = mZombatarData.size() - aOffset - sizeof(ZombatarHead);
+	if (aRemaining > 0)
+		memmove(mZombatarData.data() + aOffset,
+				mZombatarData.data() + aOffset + sizeof(ZombatarHead),
+				aRemaining);
+	mZombatarData.resize(mZombatarData.size() - sizeof(ZombatarHead));
+	mZombatarHeadCount--;
 }
 
 void PottedPlant::InitializePottedPlant(SeedType theSeedType)

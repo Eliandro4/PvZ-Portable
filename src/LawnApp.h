@@ -40,6 +40,7 @@ class EffectSystem;
 class TodParticleSystem;
 class Reanimation;
 class ReanimatorCache;
+class ZombatarComposer;
 class ProfileMgr;
 class PlayerInfo;
 class Music;
@@ -102,6 +103,7 @@ public:
 	ZenGarden*						mZenGarden;
 	EffectSystem*					mEffectSystem;
 	ReanimatorCache*				mReanimatorCache;
+	ZombatarComposer*				mZombatarComposer;
 	ProfileMgr*						mProfileMgr;
 	PlayerInfo*						mPlayerInfo;
 	LevelStats*						mLastLevelStats;
@@ -186,6 +188,7 @@ public:
 	void							PreNewGame(GameMode theGameMode, bool theLookForSavedGame);
 	void							ShowGameSelector();
 	void							KillGameSelector();
+	void							ShowZombatarTOS();
 	void							ShowAwardScreen(AwardType theAwardType, bool theShowAchievements); // @Patoke: add argument
 	void							KillAwardScreen();
 	void							ShowSeedChooserScreen();
