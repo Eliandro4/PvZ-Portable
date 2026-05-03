@@ -344,7 +344,7 @@ static constexpr int FINISHED_BTN_X = 642;
 static constexpr int FINISHED_BTN_Y = 359;
 
 static constexpr int NEW_ZOMBIE_BTN_X = 253;
-static constexpr int NEW_ZOMBIE_BTN_Y = 464;
+static constexpr int NEW_ZOMBIE_BTN_Y = 503;
 
 static constexpr int PREV_BTN_X = 95;
 static constexpr int PREV_BTN_Y = 373;
@@ -404,7 +404,7 @@ ZombatarWidget::ZombatarWidget(LawnApp* theApp)
 	mDeleteButton = MakeNewButton(Zombatar_Delete, this, "", nullptr,
 		IMAGE_ZOMBATAR_BEGIN_BUTTON, IMAGE_ZOMBATAR_BEGIN_BUTTON_HIGHLIGHT,
 		IMAGE_ZOMBATAR_BEGIN_BUTTON_HIGHLIGHT);
-	mDeleteButton->Resize(253, 464, 98, 26);
+	mDeleteButton->Resize(253, NEW_ZOMBIE_BTN_Y, 98, 26);
 
 	mPrevButton = MakeNewButton(Zombatar_PrevPage, this, "", nullptr,
 		IMAGE_ZOMBATAR_PREV_BUTTON, IMAGE_ZOMBATAR_PREV_BUTTON_HIGHLIGHT,
@@ -562,14 +562,14 @@ void ZombatarWidget::DrawAccessoryGrid(Graphics* theG)
 			int aX = GRID_X + (aLocalIdx % GRID_COLS) * GRID_SPACING + aOffsetX;
 			int aY = GRID_Y + (aLocalIdx / GRID_COLS) * GRID_SPACING;
 
-			bool isSelected = (mCurrentHead.mSkinColor == static_cast<uint32_t>(i));
-			Image* aBgImage = isSelected ? IMAGE_ZOMBATAR_ACCESSORY_BG_HIGHLIGHT : IMAGE_ZOMBATAR_ACCESSORY_BG;
-			theG->DrawImage(aBgImage, aX, aY);
-
 			theG->SetColorizeImages(true);
 			theG->SetColor(GetCategoryColor(mCurrentCategory, i));
 			theG->DrawImage(IMAGE_ZOMBATAR_COLORPICKER, aX + 5, aY + 5);
 			theG->SetColorizeImages(false);
+
+			bool isSelected = (mCurrentHead.mSkinColor == static_cast<uint32_t>(i));
+			if (isSelected)
+				theG->DrawImage(IMAGE_ZOMBATAR_COLORPICKER_HIGHLIGHT, aX + 5, aY + 5);
 		}
 		return;
 	}
@@ -623,10 +623,10 @@ void ZombatarWidget::DrawActionButtons(Graphics* theG)
 {
 	mBackButton->Draw(theG);
 	mFinishedButton->Draw(theG);
+	mNewZombieButton->Draw(theG);
 
 	if (mCurrentHeadIndex >= 0)
 	{
-		mNewZombieButton->Draw(theG);
 		mDeleteButton->Draw(theG);
 	}
 
@@ -739,22 +739,10 @@ void ZombatarWidget::ButtonDepress(int theId)
 
 	if (theId == Zombatar_NewZombie)
 	{
-		if (mNeedToSave && mCurrentHeadIndex >= 0)
-		{
-			int aResult = mApp->LawnMessageBox(
-				Dialogs::DIALOG_MESSAGE,
-				"[ZOMBATAR_FINISHED_WARNING_HEADER]",
-				"[ZOMBATAR_FINISHED_WARNING_TEXT]",
-				"[DIALOG_BUTTON_YES]",
-				"[DIALOG_BUTTON_NO]",
-				Dialog::BUTTONS_YES_NO);
-			if (aResult == Dialog::ID_YES)
-				SaveCurrentHead();
-		}
-		memset(&mCurrentHead, 0xFF, sizeof(ZombatarHead));
-		mCurrentHead.mSkinColor = 0;
-		mCurrentHeadIndex = -1;
-		mNeedToSave = true;
+		if (mNeedToSave)
+			SaveCurrentHead();
+		mApp->mGameSelector->SlideTo(0, 0);
+		mApp->mGameSelector->mWidgetManager->SetFocus(mApp->mGameSelector);
 		return;
 	}
 
@@ -814,12 +802,12 @@ void ZombatarWidget::ButtonDepress(int theId)
 		if (aOldCategory == ZOMBATAR_CATEGORY_SKIN && mCurrentCategory != ZOMBATAR_CATEGORY_SKIN)
 		{
 			for (int i = 0; i < 9; i++)
-				mWidgetManager->AddWidget(mAccessoryButtons[i]);
+				AddWidget(mAccessoryButtons[i]);
 		}
 		else if (aOldCategory != ZOMBATAR_CATEGORY_SKIN && mCurrentCategory == ZOMBATAR_CATEGORY_SKIN)
 		{
 			for (int i = 0; i < 9; i++)
-				mWidgetManager->RemoveWidget(mAccessoryButtons[i]);
+				RemoveWidget(mAccessoryButtons[i]);
 		}
 		return;
 	}
