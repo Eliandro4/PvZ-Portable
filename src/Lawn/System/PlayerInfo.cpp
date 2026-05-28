@@ -141,22 +141,24 @@ void PlayerInfo::SyncDetails(DataSync& theSync)
 		}
 	}
 
-	// Zombatar is not supported: ignore any stored data on load.
-	if (theSync.GetReader())
-	{
-		mZombatarAccepted = 0;
-		mZombatarHeadCount = 0;
-		mZombatarData.clear();
-		memset(mZombatarTrailingUnknown, 0, sizeof(mZombatarTrailingUnknown));
-		mZombatarCreatedBefore = 0;
-		return;
-	}
-
-	// Write a minimal, safe layout (no Zombatars).
+	// Zombatar data
 	theSync.SyncUInt8(mZombatarAccepted);
 	theSync.SyncUInt32(mZombatarHeadCount);
-	theSync.SyncBytes(mZombatarTrailingUnknown, sizeof(mZombatarTrailingUnknown));
 	theSync.SyncUInt8(mZombatarCreatedBefore);
+
+	// Sync zombatar data blob
+	uint32_t aZombatarDataSize = static_cast<uint32_t>(mZombatarData.size());
+	theSync.SyncUInt32(aZombatarDataSize);
+	if (theSync.GetReader())
+	{
+		mZombatarData.resize(aZombatarDataSize);
+	}
+	if (aZombatarDataSize > 0)
+	{
+		theSync.SyncBytes(mZombatarData.data(), aZombatarDataSize);
+	}
+
+	theSync.SyncBytes(mZombatarTrailingUnknown, sizeof(mZombatarTrailingUnknown));
 }
 
 void PlayerInfo::LoadDetails()

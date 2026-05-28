@@ -48,6 +48,7 @@
 #include "Lawn/Widget/StoreScreen.h"
 #include "Lawn/Widget/CheatDialog.h"
 #include "Lawn/Widget/GameSelector.h"
+#include "Lawn/Widget/ZombatarTOS.h"
 #include "Lawn/Widget/CreditScreen.h"
 #include "Sexy.TodLib/EffectSystem.h"
 #include "Sexy.TodLib/FilterEffect.h"
@@ -741,6 +742,13 @@ AlmanacDialog* LawnApp::DoAlmanacDialog(SeedType theSeedType, ZombieType theZomb
 	TodTrace("almanac load time: %d ms", aDuration);
 
 	return aDialog;
+}
+
+void LawnApp::ShowZombatarTOS()
+{
+	ZombatarTOS* aDialog = new ZombatarTOS(this);
+	AddDialog(Dialogs::DIALOG_ZOMBATAR_TOS, aDialog);
+	mWidgetManager->SetFocus(aDialog);
 }
 
 // GOTY @Patoke: 0x453590
@@ -1739,6 +1747,7 @@ void LawnApp::LoadingThreadProc()
 		return;
 
 	TodStringListLoad("Properties/LawnStrings.txt");
+	TodStringListLoad("Properties/ZombatarTOS.txt");
 
 	// Load localized properties AFTER LawnStrings so they can override string values
 	LoadProperties("properties/default.xml", false, false);

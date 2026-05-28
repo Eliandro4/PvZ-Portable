@@ -27,6 +27,7 @@
 #include "widget/ButtonListener.h"
 #include "AchievementsScreen.h"
 #include "GameButton.h"
+#include "ZombatarWidget.h"
 
 class LawnApp;
 class ToolTipWidget;
@@ -109,7 +110,7 @@ public:
     int                         mStartY;                    //+GOTY @Patoke: 0x15C
     int                         mDestX;                     //+GOTY @Patoke: 0x160
     int                         mDestY;                     //+GOTY @Patoke: 0x164
-    //ZombatarWidget*           mZombatarWidget;            //+GOTY @Patoke: 0x168
+    ZombatarWidget*             mZombatarWidget;            //+GOTY @Patoke: 0x168
     AchievementsWidget*         mAchievementsWidget;        //+GOTY @Patoke: 0x16C
 
 public:

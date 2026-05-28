@@ -408,8 +408,16 @@ NewLawnButton* MakeNewButton(int theId, ButtonListener* theListener, const std::
 	aButton->SetFont(theFont == nullptr ? Sexy::FONT_BRIANNETOD12 : theFont);
 	aButton->SetLabel(theText);
 
-	aButton->mWidth = theImageNormal->mWidth;
-	aButton->mHeight = theImageNormal->mHeight;
+	if (theImageNormal)
+	{
+		aButton->mWidth = theImageNormal->mWidth;
+		aButton->mHeight = theImageNormal->mHeight;
+	}
+	else
+	{
+		aButton->mWidth = 100;
+		aButton->mHeight = 30;
+	}
 	aButton->mButtonImage = theImageNormal;
 	aButton->mDownImage = theImageDown;
 	aButton->mOverImage = theImageOver;

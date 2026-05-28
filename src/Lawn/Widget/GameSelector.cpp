@@ -354,8 +354,8 @@ GameSelector::GameSelector(LawnApp* theApp)
 	mStartY = 0;
 	mDestX = 0;
 	mDestY = 0;
-	//mZombatarWidget = new ZombatarWidget(this);
-	//mZombatarWidget->Resize(800, 0, mApp->mWidth, mApp->mHeight);
+	mZombatarWidget = new ZombatarWidget(mApp);
+	mZombatarWidget->Resize(800, 0, mApp->mWidth, mApp->mHeight);
 	mAchievementsWidget = new AchievementsWidget(this->mApp);
 	mAchievementsWidget->Move(0, mApp->mHeight);
 
@@ -391,8 +391,8 @@ GameSelector::~GameSelector()
 	// @Patoke: new widgets
 	if (mZombatarButton)
 		delete mZombatarButton;
-	//if (mZombatarWidget) // todo @Patoke: add zombatar
-	//	delete mZombatarWidget;
+	if (mZombatarWidget)
+		delete mZombatarWidget;
 	if (mAchievementsButton)
 		delete mAchievementsButton;
 	if (mAchievementsWidget)
@@ -1363,10 +1363,17 @@ void GameSelector::ButtonDepress(int theId)
 			mApp->mZenGarden->SetupForZenTutorial();
 		break;
 	case GameSelector::GameSelector_Zombatar:
-		//if (mApp->mPlayerInfo->mAckZombatarTOS)
-		//	GameSelector::ShowZombatarScreen();
-		//else
-		//	LawnApp::ShowZombatarTOS();
+		if (mApp->mPlayerInfo && mApp->mPlayerInfo->mZombatarAccepted)
+		{
+			mZombatarWidget->ChangeState(ZombatarState::STATE_AVATAR_LIST);
+			mZombatarWidget->Move(0, 0);
+			mWidgetManager->AddWidget(mZombatarWidget);
+			mWidgetManager->SetFocus(mZombatarWidget);
+		}
+		else
+		{
+			mApp->ShowZombatarTOS();
+		}
 		break;
 	case GameSelector::GameSelector_AchievementsBack: // @Patoke: seems to be unused
 		//SlideTo(0, 0);
