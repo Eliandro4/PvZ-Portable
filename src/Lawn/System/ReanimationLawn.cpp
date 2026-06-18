@@ -344,7 +344,7 @@ void ReanimatorCache::ReanimatorCacheInitialize()
 		mPlantImages[i] = nullptr;
 	for (int i = 0; i < LawnMowerType::NUM_MOWER_TYPES; i++)
 		mLawnMowers[i] = nullptr;
-	for (int i = 0; i < ZombieType::NUM_ZOMBIE_TYPES; i++)
+	for (int i = 0; i < ZombieType::NUM_CACHED_ZOMBIE_TYPES; i++)
 		mZombieImages[i] = nullptr;
 }
 
@@ -366,7 +366,7 @@ void ReanimatorCache::ReanimatorCacheDispose()
 		delete mLawnMowers[i];
 		mLawnMowers[i] = nullptr;
 	}
-	for (int i = 0; i < ZombieType::NUM_ZOMBIE_TYPES; i++)
+	for (int i = 0; i < ZombieType::NUM_CACHED_ZOMBIE_TYPES; i++)
 	{
 		delete mZombieImages[i];
 		mZombieImages[i] = nullptr;
