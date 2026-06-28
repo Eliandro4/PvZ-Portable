@@ -158,7 +158,7 @@ void TodStringListLoad(const char* theFileName)
 		TodErrorMessageBox(Sexy::StrFormat("Failed to load string list file '%s'", theFileName).c_str(), "Error");
 }
 
-std::string TodStringListFind(const std::string& theName)
+std::string TodStringListFind(std::string_view theName)
 {
 	auto anItr = gSexyAppBase->mStringProperties.find(theName);
 	if (anItr != gSexyAppBase->mStringProperties.end())
@@ -167,19 +167,19 @@ std::string TodStringListFind(const std::string& theName)
 	}
 	else
 	{
-		return Sexy::StrFormat("<Missing %s>", theName.c_str());
+		return Sexy::StrFormat("<Missing %s>", std::string(theName).c_str());
 	}
 }
 
 // GOTY @Patoke: 0x523B90
-std::string TodStringTranslate(const std::string& theString)
+std::string TodStringTranslate(std::string_view theString)
 {
 	if (theString.size() >= 3 && theString[0] == '[')
 	{
-		std::string aName = theString.substr(1, theString.size() - 2);  // 取“[”与“]”中间的部分
+		std::string_view aName = theString.substr(1, theString.size() - 2);  // 取"["与"]"中间的部分
 		return TodStringListFind(aName);
 	}
-	return theString;
+	return std::string(theString);
 }
 
 std::string TodStringTranslate(const char* theString)
@@ -199,11 +199,11 @@ std::string TodStringTranslate(const char* theString)
 		return "";
 }
 
-bool TodStringListExists(const std::string& theString)
+bool TodStringListExists(std::string_view theString)
 {
 	if (theString.size() >= 3 && theString[0] == '[')
 	{
-		std::string aName = theString.substr(1, theString.size() - 2);  // 取“[”与“]”中间的部分
+		std::string_view aName = theString.substr(1, theString.size() - 2);  // 取"["与"]"中间的部分
 		return gSexyAppBase->mStringProperties.find(aName) != gSexyAppBase->mStringProperties.end();
 	}
 	return false;

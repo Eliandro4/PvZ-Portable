@@ -428,7 +428,7 @@ float RandRangeFloat(float theMin, float theMax)
 	return Rand(theMax - theMin) + theMin;
 }
 
-void TodDrawString(Graphics* g, const std::string& theText, int thePosX, int thePosY, _Font* theFont, const Color& theColor, DrawStringJustification theJustification)
+void TodDrawString(Graphics* g, std::string_view theText, int thePosX, int thePosY, _Font* theFont, const Color& theColor, DrawStringJustification theJustification)
 {
 	std::string aFinalString = TodStringTranslate(theText);
 
@@ -462,7 +462,7 @@ static RenderCommand gRenderCommandPool[POOL_SIZE];
 static RenderCommand* gRenderTail[256];
 static RenderCommand* gRenderHead[256];
 
-void TodDrawStringMatrix(Graphics* g, const _Font* theFont, const SexyMatrix3& theMatrix, const std::string& theString, const Color& theColor)
+void TodDrawStringMatrix(Graphics* g, const _Font* theFont, const SexyMatrix3& theMatrix, std::string_view theString, const Color& theColor)
 {
 	std::string aFinalString = TodStringTranslate(theString);
 
@@ -1252,7 +1252,7 @@ void FreeGlobalAllocators()
 	gNumGlobalAllocators = 0;
 }
 
-std::string TodReplaceString(const std::string& theText, const char* theStringToFind, const std::string& theStringToSubstitute)
+std::string TodReplaceString(std::string_view theText, const char* theStringToFind, std::string_view theStringToSubstitute)
 {
 	std::string aFinalString = TodStringTranslate(theText);
 	size_t aPos = aFinalString.find(theStringToFind);
@@ -1265,7 +1265,7 @@ std::string TodReplaceString(const std::string& theText, const char* theStringTo
 	return aFinalString;
 }
 
-std::string TodReplaceNumberString(const std::string& theText, const char* theStringToFind, int theNumber)
+std::string TodReplaceNumberString(std::string_view theText, const char* theStringToFind, int theNumber)
 {
 	std::string aFinalString = TodStringTranslate(theText);
 	size_t aPos = aFinalString.find(theStringToFind);

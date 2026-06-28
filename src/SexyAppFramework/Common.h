@@ -188,7 +188,7 @@ inline void			inlineTrim(std::string &theData, const std::string& theChars = " \
 }
 
 // Decode next UTF-8 codepoint, advancing theOffset. Returns false on end/error.
-inline bool UTF8DecodeNext(const std::string& theString, size_t& theOffset, char32_t& theOutChar)
+inline bool UTF8DecodeNext(std::string_view theString, size_t& theOffset, char32_t& theOutChar)
 {
 	if (theOffset >= theString.size())
 		return false;

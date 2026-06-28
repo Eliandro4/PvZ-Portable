@@ -59,10 +59,10 @@ bool                TodStringListReadValue(const char*& thePtr, std::string& the
 bool                TodStringListReadItems(const char* theFileText);
 bool                TodStringListReadFile(const char* theFileName);
 void                TodStringListLoad(const char* theFileName);
-std::string          TodStringListFind(const std::string& theName);
-std::string			TodStringTranslate(const std::string& theString);
+std::string         TodStringListFind(std::string_view theName);
+std::string			TodStringTranslate(std::string_view theString);
 std::string			TodStringTranslate(const char* theString);
-bool                TodStringListExists(const std::string& theString);
+bool                TodStringListExists(std::string_view theString);
 void                TodStringRemoveReturnChars(std::string& theString);
 bool                CharIsSpaceInFormat(char theChar, const TodStringListFormat& theCurrentFormat);
 int                 TodWriteString(Graphics* g, const std::string& theString, int theX, int theY, TodStringListFormat& theCurrentFormat, int theWidth, DrawStringJustification theJustification, bool drawString, int theOffset, int theLength);
