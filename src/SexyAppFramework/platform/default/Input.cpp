@@ -63,6 +63,11 @@ EM_JS(void, WasmStartSoftKeyboard, (), {
 				var charCode = nextValue.charCodeAt(j);
 				if (charCode > 0 && charCode <= 0x7f) {
 					state.pendingChars.push(charCode);
+				} else if (charCode > 0x7f) {
+					var bytes = new TextEncoder().encode(nextValue.charAt(j));
+					for (var k = 0; k < bytes.length; ++k) {
+						state.pendingChars.push(bytes[k]);
+					}
 				}
 			}
 
@@ -356,8 +361,16 @@ bool SexyAppBase::ProcessDeferredMessages(bool singleMessage)
 	int aPendingChar = WasmPopSoftKeyboardChar();
 	if (aPendingChar != 0)
 	{
+		std::string aPendingText;
+		do
+		{
+			aPendingText += static_cast<char>(aPendingChar);
+			aPendingChar = WasmPopSoftKeyboardChar();
+		}
+		while (aPendingChar != 0);
+
 		mLastUserInputTick = mLastTimerTime;
-		mWidgetManager->KeyChar(static_cast<char>(aPendingChar));
+		mWidgetManager->KeyText(aPendingText);
 		return WasmHasSoftKeyboardEvents() || SDL_HasEvents(SDL_FIRSTEVENT, SDL_LASTEVENT);
 	}
 #endif
@@ -509,7 +522,7 @@ bool SexyAppBase::ProcessDeferredMessages(bool singleMessage)
 
 			case SDL_TEXTINPUT:
 				mLastUserInputTick = mLastTimerTime;
-				mWidgetManager->KeyChar((char)event.text.text[0]);
+				mWidgetManager->KeyText(std::string_view(event.text.text));
 				break;
 		}
 	}

@@ -80,6 +80,7 @@ public:
 
 protected:
 	virtual void			ProcessKey(KeyCode theKey, char theChar);
+	void					InsertTextAtCursor(std::string_view theText);
 	std::string&			GetDisplayString();
 	virtual void			HiliteWord();
 	void					UpdateCaretPos();
@@ -87,7 +88,7 @@ protected:
 public:
 	virtual void			SetFont(_Font* theFont, _Font* theWidthCheckFont = nullptr);
 	virtual void			SetText(const std::string& theText, bool leftPosToZero = true);
-	virtual bool			IsPartOfWord(char theChar);
+	virtual bool			IsPartOfWord(char32_t theChar);
 	virtual int				GetCharAt(int x, int y);
 
 	void					Resize(int theX, int theY, int theWidth, int theHeight) override;
@@ -103,6 +104,7 @@ public:
 
 	void					KeyDown(KeyCode theKey) override;
 	void					KeyChar(char theChar) override;
+	void					KeyText(std::string_view theText) override;
 
 	void					MouseDown(int x, int y, int theClickCount) override { Widget::MouseDown(x, y, theClickCount); }
 	void					MouseDown(int x, int y, int theBtnNum, int theClickCount) override;

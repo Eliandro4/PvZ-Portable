@@ -237,6 +237,8 @@ void Widget::Update()
 
 void Widget::KeyChar(char){}
 
+void Widget::KeyText(std::string_view){}
+
 void Widget::KeyDown(KeyCode theKey)
 {
 	if (theKey == KEYCODE_TAB)
