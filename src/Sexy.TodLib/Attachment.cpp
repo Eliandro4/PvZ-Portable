@@ -299,8 +299,8 @@ void Attachment::PropogateColor(const Color& theColor, bool theEnableAdditiveCol
 			TodParticleSystem* aParticleSystem = gEffectSystem->mParticleHolder->mParticleSystems.DataArrayTryToGet(aAttachEffect->mEffectID);
 			if (aParticleSystem)
 			{
-				aParticleSystem->OverrideColor(nullptr, theColor);
-				aParticleSystem->OverrideExtraAdditiveDraw(nullptr, theEnableAdditiveColor);
+				aParticleSystem->OverrideColor("", theColor);
+				aParticleSystem->OverrideExtraAdditiveDraw("", theEnableAdditiveColor);
 			}
 			break;
 		}
@@ -350,7 +350,7 @@ void Attachment::OverrideScale(float theScale)
 			TodParticleSystem* aParticleSystem = gEffectSystem->mParticleHolder->mParticleSystems.DataArrayTryToGet(aAttachEffect->mEffectID);
 			if (aParticleSystem)
 			{
-				aParticleSystem->OverrideScale(nullptr, theScale);
+				aParticleSystem->OverrideScale("", theScale);
 			}
 			break;
 		}

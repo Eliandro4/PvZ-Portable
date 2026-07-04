@@ -28,7 +28,6 @@
 int gTodStringFormatCount;
 TodStringListFormat* gTodStringFormats;
 
-const int gLawnStringFormatCount = 12;
 TodStringListFormat gLawnStringFormats[12] = {    // GOTY @Patoke: 0x7248EC
 	{ "NORMAL",           nullptr,    Color(40,   50,     90,     255),       0,      0U },
 	{ "FLAVOR",           nullptr,    Color(143,  67,     27,     255),       0,      1U },
@@ -52,7 +51,7 @@ TodStringListFormat::TodStringListFormat()
 	mFormatFlags = 0U;
 }
 
-TodStringListFormat::TodStringListFormat(const char* theFormatName, _Font** theFont, const Color& theColor, int theLineSpacingOffset, unsigned int theFormatFlags) : 
+TodStringListFormat::TodStringListFormat(std::string_view theFormatName, _Font** theFont, const Color& theColor, int theLineSpacingOffset, unsigned int theFormatFlags) : 
 	mFormatName(theFormatName), mNewFont(theFont), mNewColor(theColor), mLineSpacingOffset(theLineSpacingOffset), mFormatFlags(theFormatFlags)
 { 
 }
@@ -104,7 +103,7 @@ void TodStringRemoveReturnChars(std::string& theString)
 	for (size_t i = 0; i < theString.size(); )
 	{
 		if (theString[i] == '\r')
-			theString.replace(i, 1, "", 0);  // 原版中此处的“1”和“""”已内联至函数内部
+			theString.erase(i, 1);  // 原版中此处的“1”和“""”已内联至函数内部
 		else
 			i++;
 	}
@@ -120,9 +119,9 @@ bool TodStringListReadValue(const char*& thePtr, std::string& theValue)
 	return true;
 }
 
-bool TodStringListReadItems(const char* theFileText)
+bool TodStringListReadItems(std::string_view theFileText)
 {
-	const char* aPtr = theFileText;
+	const char* aPtr = theFileText.data();
 	std::string aName;
 	std::string aValue;
 
@@ -210,12 +209,12 @@ bool TodStringListExists(std::string_view theString)
 }
 
 // GOTY @Patoke: 0x523E20
-void TodWriteStringSetFormat(const char* theFormat, TodStringListFormat& theCurrentFormat)
+void TodWriteStringSetFormat(std::string_view theFormat, TodStringListFormat& theCurrentFormat)
 {
 	for (int i = 0; i < gTodStringFormatCount; i++)
 	{
 		const TodStringListFormat& aFormat = gTodStringFormats[i];
-		if (strncmp(theFormat, aFormat.mFormatName, strlen(aFormat.mFormatName)) == 0)
+		if (theFormat.starts_with(aFormat.mFormatName))
 		{
 			if (aFormat.mNewFont != nullptr)
 				theCurrentFormat.mNewFont = aFormat.mNewFont;
@@ -233,7 +232,7 @@ bool CharIsSpaceInFormat(char theChar, const TodStringListFormat& theCurrentForm
 	return theChar == ' ' || (TestBit(theCurrentFormat.mFormatFlags, TodStringFormatFlag::TOD_FORMAT_IGNORE_NEWLINES) && theChar == '\n');
 }
 
-int TodWriteString(Graphics* g, const std::string& theString, int theX, int theY, TodStringListFormat& theCurrentFormat, int theWidth, DrawStringJustification theJustification, bool drawString, int theOffset, int theLength)
+int TodWriteString(Graphics* g, std::string_view theString, int theX, int theY, TodStringListFormat& theCurrentFormat, int theWidth, DrawStringJustification theJustification, bool drawString, int theOffset, int theLength)
 {
 	_Font* aFont = *theCurrentFormat.mNewFont;
 	if (drawString)
@@ -269,17 +268,17 @@ int TodWriteString(Graphics* g, const std::string& theString, int theX, int theY
 	{
 		if (theString[i] == '{')
 		{
-			const char* aFormatStart = theString.c_str() + i;
-			const char* aFormatEnd = strchr(aFormatStart + 1, '}');
-			if (aFormatEnd != nullptr)  // 如果存在完整的“{FORMAT}”控制字符
+			size_t aFormatEnd = theString.find('}', i + 1);
+			if (aFormatEnd != std::string_view::npos)  // 如果存在完整的“{FORMAT}”控制字符
 			{
-				i += aFormatEnd - aFormatStart;  // i 移动至 "}" 处
+				std::string_view aFormat = theString.substr(i + 1, aFormatEnd - i - 1);
+				i = static_cast<int>(aFormatEnd);  // i 移动至 "}" 处
 				if (drawString)  // 如果需要实际绘制
 					aFont->DrawString(g, theX + aXOffset, theY, aString, theCurrentFormat.mNewColor, g->mClipRect);  // 将已经积攒的字符进行绘制
 				
 				aXOffset += aFont->StringWidth(aString);  // 横向偏移值加上绘制的字符串的宽度
 				aString.assign("");  // 清空字符串
-				TodWriteStringSetFormat(aFormatStart + 1, theCurrentFormat);  // 根据当前控制字符调整格式
+				TodWriteStringSetFormat(aFormat, theCurrentFormat);  // 根据当前控制字符调整格式
 				// _Font* aFont = *theCurrentFormat.mNewFont; // unused
 			}
 		}
@@ -306,7 +305,7 @@ int TodWriteString(Graphics* g, const std::string& theString, int theX, int theY
 	return aXOffset + aFont->StringWidth(aString);
 }
 
-int TodWriteWordWrappedHelper(Graphics* g, const std::string& theString, int theX, int theY, TodStringListFormat& theCurrentFormat, int theWidth, DrawStringJustification theJustification, bool drawString, int theOffset, int theLength, int theMaxChars)
+int TodWriteWordWrappedHelper(Graphics* g, std::string_view theString, int theX, int theY, TodStringListFormat& theCurrentFormat, int theWidth, DrawStringJustification theJustification, bool drawString, int theOffset, int theLength, int theMaxChars)
 {
 	if (theOffset + theLength > theMaxChars)
 	{
@@ -318,7 +317,7 @@ int TodWriteWordWrappedHelper(Graphics* g, const std::string& theString, int the
 }
 
 // GOTY @Patoke: 0x5241C0
-int TodDrawStringWrappedHelper(Graphics* g, const std::string& theText, const Rect& theRect, _Font* theFont, const Color& theColor, DrawStringJustification theJustification, bool drawString)
+int TodDrawStringWrappedHelper(Graphics* g, std::string_view theText, const Rect& theRect, _Font* theFont, const Color& theColor, DrawStringJustification theJustification, bool drawString)
 {
 	int theMaxChars = theText.size();
 	TodStringListFormat aCurrentFormat;
@@ -347,12 +346,11 @@ int TodDrawStringWrappedHelper(Graphics* g, const std::string& theText, const Re
 
 		if (theText[aCurPos] == '{')
 		{
-			const char* aFmtStart = aCurPos + theText.c_str();
-			const char* aFormat = aFmtStart + 1;
-			const char* aFmtEnd = strchr(aFormat, '}');
-			if (aFmtEnd != nullptr)
+			size_t aFmtEnd = theText.find('}', aCurPos + 1);
+			if (aFmtEnd != std::string_view::npos)
 			{
-				aCurPos += aFmtEnd - aFmtStart + 1;
+				std::string_view aFormat = theText.substr(aCurPos + 1, aFmtEnd - aCurPos - 1);
+				aCurPos = aFmtEnd + 1;
 				int aOldAscentOffset = theFont->GetAscent() - theFont->GetAscentPadding();
 				Color aExistingColor = aCurrentFormat.mNewColor;
 				TodWriteStringSetFormat(aFormat, aCurrentFormat);

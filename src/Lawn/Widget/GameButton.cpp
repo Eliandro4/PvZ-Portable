@@ -31,7 +31,7 @@
 
 static Color gGameButtonColors[6] = { Color(0, 0, 0), Color(0, 0, 0), Color(0, 0, 0), Color(255, 255, 255), Color(132, 132, 132), Color(212, 212, 212) };
 
-void DrawStoneButton(Graphics* g, int x, int y, int theWidth, int theHeight, bool isDown, bool isHighLighted, const std::string& theLabel)
+void DrawStoneButton(Graphics* g, int x, int y, int theWidth, int theHeight, bool isDown, bool isHighLighted, std::string_view theLabel)
 {
 	Image* aLeftImage = Sexy::IMAGE_BUTTON_LEFT;
 	Image* aMiddleImage = Sexy::IMAGE_BUTTON_MIDDLE;

@@ -24,6 +24,8 @@
 #include <stdarg.h>
 #include <stdexcept>
 #include <fstream>
+#include <string>
+#include <string_view>
 
 #ifdef __SWITCH__
 #include <switch.h>
@@ -37,17 +39,19 @@
 
 using namespace Sexy;
 
-static char gLogFileName[512];
-static char gDebugDataFolder[512];
+static std::string gLogFileName;
+static std::string gDebugDataFolder;
 
-void TodErrorMessageBox(const char* theMessage, const char* theTitle)
+void TodErrorMessageBox(std::string_view theMessage, std::string_view theTitle)
 {
+	std::string aMsg(theMessage);
+	std::string aTitle(theTitle);
 #ifdef __SWITCH__
 	ErrorApplicationConfig c;
-	errorApplicationCreate(&c, theTitle, theMessage);
+	errorApplicationCreate(&c, aTitle.c_str(), aMsg.c_str());
 	errorApplicationShow(&c);
 #else
-	throw std::runtime_error("Error Box\n--" + std::string(theTitle) + "--\n" + theMessage);
+	throw std::runtime_error("Error Box\n--" + aTitle + "--\n" + aMsg);
 #endif
 }
 
@@ -71,37 +75,26 @@ void TodFree(void* theBlock)
 
 void TodAssertFailed(const char* theCondition, const char* theFile, int theLine, const char* theMsg, ...)
 {
-	char aFormattedMsg[1024];
 	va_list argList;
 	va_start(argList, theMsg);
-	int aCount = TodVsnprintf(aFormattedMsg, sizeof(aFormattedMsg), theMsg, argList);
+	std::string aFormattedMsg = Sexy::VFormat(theMsg, argList);
 	va_end(argList);
 
-	if (aCount != 0) {
-		if (aFormattedMsg[aCount - 1] != '\n')
-		{
-			if (aCount + 1 < 1024)
-			{
-				aFormattedMsg[aCount] = '\n';
-				aFormattedMsg[aCount + 1] = '\0';
-			}
-			else
-			{
-				aFormattedMsg[aCount - 1] = '\n';
-			}
-		}
+	if (!aFormattedMsg.empty() && aFormattedMsg.back() != '\n')
+	{
+		aFormattedMsg.push_back('\n');
 	}
 
-	char aBuffer[1024];
+	std::string aBuffer;
 	if (*theCondition != '\0')
 	{
-		TodSnprintf(aBuffer, sizeof(aBuffer), "\n%s(%d)\nassertion failed: '%s'\n%s\n", theFile, theLine, theCondition, aFormattedMsg);
+		aBuffer = Sexy::StrFormat("\n%s(%d)\nassertion failed: '%s'\n%s\n", theFile, theLine, theCondition, aFormattedMsg.c_str());
 	}
 	else
 	{
-		TodSnprintf(aBuffer, sizeof(aBuffer), "\n%s(%d)\nassertion failed: %s\n", theFile, theLine, aFormattedMsg);
+		aBuffer = Sexy::StrFormat("\n%s(%d)\nassertion failed: %s\n", theFile, theLine, aFormattedMsg.c_str());
 	}
-	TodTrace("%s", aBuffer);
+	TodTrace("%s", aBuffer.c_str());
 
 	TodErrorMessageBox(aBuffer, "Assertion failed");
 
@@ -110,39 +103,30 @@ void TodAssertFailed(const char* theCondition, const char* theFile, int theLine,
 
 void TodLog(const char* theFormat, ...)
 {
-	char aButter[1024];
 	va_list argList;
 	va_start(argList, theFormat);
-	int aCount = TodVsnprintf(aButter, sizeof(aButter), theFormat, argList);
+	std::string aButter = Sexy::VFormat(theFormat, argList);
 	va_end(argList);
 
-	if (aButter[aCount - 1] != '\n')
+	if (aButter.empty() || aButter.back() != '\n')
 	{
-		if (aCount + 1 < 1024)
-		{
-			aButter[aCount] = '\n';
-			aButter[aCount + 1] = '\0';
-		}
-		else
-		{
-			aButter[aCount - 1] = '\n';
-		}
+		aButter.push_back('\n');
 	}
 
 	TodLogString(aButter);
 }
 
-void TodLogString(const char* theMsg)
+void TodLogString(std::string_view theMsg)
 {
 #ifdef PVZ_DEBUG
 	std::ofstream f(Sexy::PathFromU8(gLogFileName), std::ios::app | std::ios::binary);
 	if (!f)
 	{
-		fprintf(stderr, "Failed to open log file '%s'\n", gLogFileName);
+		fprintf(stderr, "Failed to open log file '%s'\n", gLogFileName.c_str());
 		return;
 	}
 
-	f.write(theMsg, (std::streamsize)strlen(theMsg));
+	f.write(theMsg.data(), (std::streamsize)theMsg.size());
 	if (!f)
 	{
 		fprintf(stderr, "Failed to write to log file\n");
@@ -152,26 +136,17 @@ void TodLogString(const char* theMsg)
 
 void TodTrace(const char* theFormat, ...)
 {
-	char aButter[1024];
 	va_list argList;
 	va_start(argList, theFormat);
-	int aCount = TodVsnprintf(aButter, sizeof(aButter), theFormat, argList);
+	std::string aButter = Sexy::VFormat(theFormat, argList);
 	va_end(argList);
 
-	if (aButter[aCount - 1] != '\n')
+	if (aButter.empty() || aButter.back() != '\n')
 	{
-		if (aCount + 1 < 1024)
-		{
-			aButter[aCount] = '\n';
-			aButter[aCount + 1] = '\0';
-		}
-		else
-		{
-			aButter[aCount - 1] = '\n';
-		}
+		aButter.push_back('\n');
 	}
 
-	Sexy::PrintF("%s", aButter);
+	Sexy::PrintF("%s", aButter.c_str());
 }
 
 void TodHesitationTrace(...)
@@ -180,26 +155,17 @@ void TodHesitationTrace(...)
 
 void TodTraceAndLog(const char* theFormat, ...)
 {
-	char aButter[1024];
 	va_list argList;
 	va_start(argList, theFormat);
-	int aCount = TodVsnprintf(aButter, sizeof(aButter), theFormat, argList);
+	std::string aButter = Sexy::VFormat(theFormat, argList);
 	va_end(argList);
 
-	if (aButter[aCount - 1] != '\n')
+	if (aButter.empty() || aButter.back() != '\n')
 	{
-		if (aCount + 1 < 1024)
-		{
-			aButter[aCount] = '\n';
-			aButter[aCount + 1] = '\0';
-		}
-		else
-		{
-			aButter[aCount - 1] = '\n';
-		}
+		aButter.push_back('\n');
 	}
 
-	Sexy::PrintF("%s", aButter);
+	Sexy::PrintF("%s", aButter.c_str());
 	TodLogString(aButter);
 }
 
@@ -213,36 +179,25 @@ void TodTraceWithoutSpamming(const char* theFormat, ...)
 	}
 
 	gLastTraceTime = aTime;
-	char aButter[1024];
 	va_list argList;
 	va_start(argList, theFormat);
-	int aCount = TodVsnprintf(aButter, sizeof(aButter), theFormat, argList);
+	std::string aButter = Sexy::VFormat(theFormat, argList);
 	va_end(argList);
 
-	if (aButter[aCount - 1] != '\n')
+	if (aButter.empty() || aButter.back() != '\n')
 	{
-		if (aCount + 1 < 1024)
-		{
-			aButter[aCount] = '\n';
-			aButter[aCount + 1] = '\0';
-		}
-		else
-		{
-			aButter[aCount - 1] = '\n';
-		}
+		aButter.push_back('\n');
 	}
 
-	Sexy::PrintF("%s", aButter);
+	Sexy::PrintF("%s", aButter.c_str());
 }
 
 void TodAssertInitForApp()
 {
 	MkDir(GetAppDataPath("userdata"));
 	std::string aRelativeUserPath = GetAppDataPath("userdata/");
-	strcpy(gDebugDataFolder, aRelativeUserPath.c_str());
-	strcpy(gLogFileName, gDebugDataFolder);
-	strcpy(gLogFileName + strlen(gLogFileName), "log.txt");
-	TOD_ASSERT(strlen(gLogFileName) < 512);
+	gDebugDataFolder = aRelativeUserPath;
+	gLogFileName = gDebugDataFolder + "log.txt";
 
 	TodLog("Started %d\n", static_cast<uint64_t>(time(nullptr)));
 }

@@ -37,11 +37,6 @@
 using namespace Sexy;
 
 
-std::string Sexy::DIALOG_YES_STRING				= "YES";
-std::string Sexy::DIALOG_NO_STRING				= "NO";
-std::string Sexy::DIALOG_OK_STRING				= "OK";
-std::string Sexy::DIALOG_CANCEL_STRING			= "CANCEL";
-
 static int gDialogColors[][3] = 
 {{255, 255, 255},
 {255, 255, 0},
@@ -52,7 +47,7 @@ static int gDialogColors[][3] =
 {80, 80, 80},
 {255, 255, 255}};
 
-Dialog::Dialog(Image* theComponentImage, Image* theButtonComponentImage, int theId, bool isModal, const std::string& theDialogHeader, const std::string& theDialogLines, const std::string& theDialogFooter, int theButtonMode)
+Dialog::Dialog(Image* theComponentImage, Image* theButtonComponentImage, int theId, bool isModal, std::string_view theDialogHeader, std::string_view theDialogLines, std::string_view theDialogFooter, int theButtonMode)
 {
 	mId = theId;
 	mResult = 0x7FFFFFFF;

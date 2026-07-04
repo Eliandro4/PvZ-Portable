@@ -5281,7 +5281,8 @@ void Challenge::TreeOfWisdomInit()
 	mReanimChallenge = mApp->ReanimationGetID(aReanimTree);
 
 	int aTreeSize = ClampInt(TreeOfWisdomGetSize(), 1, 50);
-	aReanimTree->PlayReanim(StrFormat("anim_grow%d", aTreeSize).c_str(), REANIM_PLAY_ONCE_AND_HOLD, 0, 18.0f);
+	std::string aName = Sexy::StrFormat("anim_grow%d", aTreeSize);
+	aReanimTree->PlayReanim(aName, REANIM_PLAY_ONCE_AND_HOLD, 0, 18.0f);
 	if (aTreeSize == 0 && mApp->mPlayerInfo->mPurchases[STORE_ITEM_TREE_FOOD] < PURCHASE_COUNT_OFFSET)
 	{
 		aReanimTree->mFrameCount += aReanimTree->mFrameStart;
@@ -5295,7 +5296,8 @@ void Challenge::TreeOfWisdomInit()
 	for (int i = 0; i < 6; i++)
 	{
 		Reanimation* aReanimCloud = mApp->AddReanimation(0, 0, 0, REANIM_TREEOFWISDOM_CLOUDS);
-		aReanimCloud->PlayReanim(StrFormat("Cloud%d", i + 1).c_str(), REANIM_PLAY_ONCE_AND_HOLD, 0, 0);
+		std::string aCloudName = Sexy::StrFormat("Cloud%d", i + 1);
+		aReanimCloud->PlayReanim(aCloudName, REANIM_PLAY_ONCE_AND_HOLD, 0, 0);
 		mReanimClouds[i] = mApp->ReanimationGetID(aReanimCloud);
 
 		int aCloudCounter = RandRangeInt(-6000, 2000);
@@ -5321,7 +5323,8 @@ void Challenge::TreeOfWisdomGrow()
 {
 	mApp->mPlayerInfo->mChallengeRecords[mApp->GetCurrentChallengeIndex()]++;
 	int aTreeSize = TreeOfWisdomGetSize();
-	mApp->ReanimationGet(mReanimChallenge)->PlayReanim(StrFormat("anim_grow%d", ClampInt(aTreeSize, 1, 51)).c_str(), REANIM_PLAY_ONCE_AND_HOLD, 0, 8.0f);
+	std::string aName = Sexy::StrFormat("anim_grow%d", ClampInt(aTreeSize, 1, 51));
+	mApp->ReanimationGet(mReanimChallenge)->PlayReanim(aName, REANIM_PLAY_ONCE_AND_HOLD, 0, 8.0f);
 	mApp->PlayFoley(FOLEY_PLANTGROW);
 
 	if (aTreeSize > 1)

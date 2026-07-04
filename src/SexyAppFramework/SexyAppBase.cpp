@@ -503,14 +503,13 @@ bool SexyAppBase::ReadDemoBuffer(std::string &theError)
 	if (!aFile.read(reinterpret_cast<char*>(&aStrLen), sizeof(aStrLen))) return false;
 	if (aStrLen > 255)
 		aStrLen = 255;
-	char aStr[256];
-	if (!aFile.read(aStr, aStrLen)) return false;
-	aStr[aStrLen] = '\0';
+	std::string aStr(aStrLen, '\0');
+	if (!aFile.read(aStr.data(), aStrLen)) return false;
 
 	DBG_ASSERTE(mProductVersion == aStr);
 	if (mProductVersion != aStr)
 	{
-		theError = "This demo file appears to be for '" + std::string(aStr) + "'";
+		theError = "This demo file appears to be for '" + aStr + "'";
 		return false;
 	}
 
@@ -910,6 +909,7 @@ bool SexyAppBase::OpenURL(const std::string& theURL, bool shutdownOnOpen)
 
 std::string SexyAppBase::GetProductVersion(const std::string& thePath)
 {
+	(void)thePath;
 	return "0";
 }
 
@@ -1044,9 +1044,8 @@ void SexyAppBase::WriteToRegistry()
 	RegistryWriteBoolean("WaitForVSync", mWaitForVSync);	
 }
 
-bool SexyAppBase::RegistryEraseKey(const std::string& _theKeyName)
+bool SexyAppBase::RegistryEraseKey(const std::string& theKeyName)
 {
-	std::string theKeyName = _theKeyName;
 	if (mRegKey.length() == 0)
 		return false;
 
@@ -1090,9 +1089,8 @@ bool SexyAppBase::RegistryEraseKey(const std::string& _theKeyName)
 	return true;
 }
 
-void SexyAppBase::RegistryEraseValue(const std::string& _theValueName)
+void SexyAppBase::RegistryEraseValue(const std::string& theValueName)
 {
-	std::string theValueName = _theValueName;
 	if (mRegKey.length() == 0)
 		return;
 
@@ -1103,7 +1101,8 @@ void SexyAppBase::RegistryEraseValue(const std::string& _theValueName)
 	int aSlashPos = static_cast<int>(theValueName.rfind('\\'));
 	if (aSlashPos != -1)
 	{
-		aKeyName += "\\" + theValueName.substr(0, aSlashPos);
+		aKeyName += "\\";
+		aKeyName += theValueName.substr(0, aSlashPos);
 		aValueName = theValueName.substr(aSlashPos + 1);
 	}
 	else
@@ -1203,19 +1202,19 @@ bool SexyAppBase::RegistryReadKey(const std::string& theValueName, uint32_t* the
 // aStr isn't initialised lmao
 bool SexyAppBase::RegistryReadString(const std::string& theKey, std::string* theString)
 {
-	char aStr[1024];
-	
-	uint32_t aType;	
-	uint32_t aLen = sizeof(aStr) - 1;
-	if (!RegistryRead(theKey, &aType, (uchar*) aStr, &aLen))
+	std::string aStr(1023, '\0');
+
+	uint32_t aType;
+	uint32_t aLen = static_cast<uint32_t>(aStr.size());
+	if (!RegistryRead(theKey, &aType, (uchar*) aStr.data(), &aLen))
 		return false;
 
 	if (aType != regemu::REGEMU_SZ)
 		return false;
 
-	aStr[aLen] = 0;
+	aStr.resize(aLen);
 
-	*theString = aStr;
+	*theString = std::move(aStr);
 	return true;
 }
 
@@ -1487,16 +1486,15 @@ std::string SexyAppBase::GetGameSEHInfo()
 {
 	int aSecLoaded = (SDL_GetTicks() - mTimeLoaded) / 1000;
 
-	char aTimeStr[16];
-	snprintf(aTimeStr, sizeof(aTimeStr), "%02d:%02d:%02d", (aSecLoaded/60/60), (aSecLoaded/60)%60, aSecLoaded%60);
+	std::string aTimeStr = Sexy::StrFormat("%02d:%02d:%02d", (aSecLoaded/60/60), (aSecLoaded/60)%60, aSecLoaded%60);
 
-	std::string anInfoString = 
-		"Product: " + mProdName + "\r\n" +		
-		"Version: " + mProductVersion + "\r\n";			
+	std::string anInfoString =
+		"Product: " + mProdName + "\r\n" +
+		"Version: " + mProductVersion + "\r\n";
 
 	anInfoString +=
-		"Time Loaded: " + std::string(aTimeStr) + "\r\n"
-		"Fullscreen: " + (mIsWindowed ? std::string("No") : std::string("Yes")) + "\r\n";	
+		"Time Loaded: " + aTimeStr + "\r\n"
+		"Fullscreen: " + (mIsWindowed ? std::string("No") : std::string("Yes")) + "\r\n";
 
 	return anInfoString;						
 }
@@ -2997,7 +2995,7 @@ void SexyAppBase::LoadResourceManifest()
 
 void SexyAppBase::ShowResourceError(bool doExit)
 {
-	Popup(mResourceManager->GetErrorText());	
+	Popup(mResourceManager->GetErrorText());
 	if (doExit)
 		DoExit(0);
 }
@@ -3097,7 +3095,7 @@ std::vector<std::string> SexyAppBase::GetStringVector(std::string_view theId)
 		return std::vector<std::string>();
 }
 
-void SexyAppBase::SetString(const std::string& theId, const std::string& theValue)
+void SexyAppBase::SetString(std::string_view theId, std::string_view theValue)
 {
 	auto aPair = mStringProperties.emplace(theId, theValue);
 	if (!aPair.second) // Found it, change value
@@ -3105,21 +3103,21 @@ void SexyAppBase::SetString(const std::string& theId, const std::string& theValu
 }
 
 
-void SexyAppBase::SetBoolean(const std::string& theId, bool theValue)
+void SexyAppBase::SetBoolean(std::string_view theId, bool theValue)
 {
 	std::pair<StringBoolMap::iterator, bool> aPair = mBoolProperties.insert(StringBoolMap::value_type(theId, theValue));
 	if (!aPair.second) // Found it, change value
 		aPair.first->second = theValue;
 }
 
-void SexyAppBase::SetInteger(const std::string& theId, int theValue)
+void SexyAppBase::SetInteger(std::string_view theId, int theValue)
 {
 	std::pair<StringIntMap::iterator, bool> aPair = mIntProperties.insert(StringIntMap::value_type(theId, theValue));
 	if (!aPair.second) // Found it, change value
 		aPair.first->second = theValue;
 }
 
-void SexyAppBase::SetDouble(const std::string& theId, double theValue)
+void SexyAppBase::SetDouble(std::string_view theId, double theValue)
 {
 	std::pair<StringDoubleMap::iterator, bool> aPair = mDoubleProperties.insert(StringDoubleMap::value_type(theId, theValue));
 	if (!aPair.second) // Found it, change value
@@ -3209,7 +3207,7 @@ static int GetMaxDemoFileNum(const std::string& theDemoPrefix, int theMaxToKeep,
 	return 0;
 }
 
-void SexyAppBase::HandleCmdLineParam(const std::string& theParamName, const std::string& theParamValue)
+void SexyAppBase::HandleCmdLineParam(std::string_view theParamName, std::string_view theParamValue)
 {
 	if (theParamName == "-play")
 	{
@@ -3218,12 +3216,13 @@ void SexyAppBase::HandleCmdLineParam(const std::string& theParamName, const std:
 	}
 	else if (theParamName == "-recnum")
 	{
-		int aNum = atoi(theParamValue.c_str());
+		int aNum = 0;
+		Sexy::StringToInt(theParamValue, &aNum);
 		if (aNum<=0)
 			aNum=5;
 
 		int aDemoFileNum = GetMaxDemoFileNum(mDemoPrefix, aNum, true) + 1;
-		mDemoFileName = StrFormat((mDemoPrefix + "%d.dmo").c_str(), aDemoFileNum);
+		mDemoFileName = Sexy::StrFormat("%s%d.dmo", mDemoPrefix.c_str(), aDemoFileNum);
 		if (mDemoFileName.length() < 2)
 		{
 			mDemoFileName = GetAppDataPath(mDemoFileName);
@@ -3233,12 +3232,14 @@ void SexyAppBase::HandleCmdLineParam(const std::string& theParamName, const std:
 	}
 	else if (theParamName == "-playnum")
 	{
-		int aNum = atoi(theParamValue.c_str())-1;
+		int aNum = 0;
+		Sexy::StringToInt(theParamValue, &aNum);
+		aNum -= 1;
 		if (aNum<0)
 			aNum=0;
 
 		int aDemoFileNum = GetMaxDemoFileNum(mDemoPrefix, aNum, false)-aNum;
-		mDemoFileName = StrFormat((mDemoPrefix + "%d.dmo").c_str(), aDemoFileNum);
+		mDemoFileName = Sexy::StrFormat("%s%d.dmo", mDemoPrefix.c_str(), aDemoFileNum);
 		mRecordingDemoBuffer = false;
 		mPlayingDemoBuffer = true;
 	}
@@ -3275,7 +3276,9 @@ void SexyAppBase::HandleCmdLineParam(const std::string& theParamName, const std:
 	}
 	else
 	{
-		Popup(GetString("INVALID_COMMANDLINE_PARAM", "Invalid command line parameter: ") + theParamName);
+		std::string aMsg = GetString("INVALID_COMMANDLINE_PARAM", "Invalid command line parameter: ");
+		aMsg += theParamName;
+		Popup(aMsg);
 		DoExit(0);
 	}
 }

@@ -161,13 +161,10 @@ bool ResourceManager::Fail(const std::string& theErrorText)
 
 		int aLineNum = mXMLParser->GetCurrentLineNum();
 
-		char aLineNumStr[16];
-		snprintf(aLineNumStr, sizeof(aLineNumStr), "%d", aLineNum);	
-
 		mError = theErrorText;
 
 		if (aLineNum > 0)
-			mError += std::string(" on Line ") + aLineNumStr;
+			mError += " on Line " + std::to_string(aLineNum);
 
 		if (mXMLParser->GetFileName().length() > 0)
 			mError += " in File '" + mXMLParser->GetFileName() + "'";
@@ -344,12 +341,12 @@ bool ResourceManager::ParseImageResource(XMLElement &theElement)
 	AnimType anAnimType = AnimType_None;
 	if (anItr != theElement.mAttributes.end())
 	{
-		const char *aType = anItr->second.c_str();
+		const std::string& aType = anItr->second;
 
-		if (strcasecmp(aType,"none")==0) anAnimType = AnimType_None;
-		else if (strcasecmp(aType,"once")==0) anAnimType = AnimType_Once;
-		else if (strcasecmp(aType,"loop")==0) anAnimType = AnimType_Loop;
-		else if (strcasecmp(aType,"pingpong")==0) anAnimType = AnimType_PingPong;
+		if (Sexy::StringEqualsNoCase(aType, "none")) anAnimType = AnimType_None;
+		else if (Sexy::StringEqualsNoCase(aType, "once")) anAnimType = AnimType_Once;
+		else if (Sexy::StringEqualsNoCase(aType, "loop")) anAnimType = AnimType_Loop;
+		else if (Sexy::StringEqualsNoCase(aType, "pingpong")) anAnimType = AnimType_PingPong;
 		else 
 		{
 			Fail("Invalid animation type.");

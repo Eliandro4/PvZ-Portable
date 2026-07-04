@@ -62,9 +62,9 @@ public:
 	virtual int GetColorStringWidth(std::string_view theString);
 	void         Resize(int theX, int theY, int theWidth, int theHeight) override;
 	virtual Color GetLastColor(std::string_view theString);
-	virtual void AddToPhysicalLines(int theIdx, const std::string& theLine);
+	virtual void AddToPhysicalLines(int theIdx, std::string_view theLine);
 	
-	virtual void AddLine(const std::string& theString);
+	virtual void AddLine(std::string_view theString);
 	virtual bool SelectionReversed();
 	virtual void GetSelectedIndices(int theLineIdx, int* theIndices);
 	void         Draw(Graphics* g) override;

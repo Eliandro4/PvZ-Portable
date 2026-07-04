@@ -27,6 +27,7 @@
 
 #include "Widget.h"
 #include "ButtonListener.h"
+#include <string_view>
 
 namespace Sexy
 {
@@ -36,10 +37,10 @@ class ButtonWidget;
 class DialogButton;
 class _Font;
 
-extern std::string DIALOG_YES_STRING;
-extern std::string DIALOG_NO_STRING;
-extern std::string DIALOG_OK_STRING;
-extern std::string DIALOG_CANCEL_STRING;
+inline constexpr std::string_view DIALOG_YES_STRING = "YES";
+inline constexpr std::string_view DIALOG_NO_STRING = "NO";
+inline constexpr std::string_view DIALOG_OK_STRING = "OK";
+inline constexpr std::string_view DIALOG_CANCEL_STRING = "CANCEL";
 
 class Dialog : public Widget, public ButtonListener
 {
@@ -108,7 +109,7 @@ public:
 
 public:
 	Dialog(Image* theComponentImage, Image* theButtonComponentImage, 
-		int theId, bool isModal, const std::string& theDialogHeader, const std::string& theDialogLines, const std::string& theDialogFooter, int theButtonMode); //UNICODE
+		int theId, bool isModal, std::string_view theDialogHeader, std::string_view theDialogLines, std::string_view theDialogFooter, int theButtonMode); //UNICODE
 
 	~Dialog() override;
 

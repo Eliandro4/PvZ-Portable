@@ -22,6 +22,8 @@
 #ifndef __TODDEBUG_H__
 #define __TODDEBUG_H__
 
+#include <string_view>
+
 class TodHesitationBracket
 {
 public:
@@ -36,14 +38,14 @@ public:
 };
 
 void				TodLog(const char* theFormat, ...);
-void				TodLogString(const char* theMsg);
+void				TodLogString(std::string_view theMsg);
 void				TodTrace(const char* theFormat, ...);
 void				TodTraceMemory();
 void				TodTraceAndLog(const char* theFormat, ...);
 void				TodTraceWithoutSpamming(const char* theFormat, ...);
 void				TodHesitationTrace(...);
 void				TodAssertFailed(const char* theCondition, const char* theFile, int theLine, const char* theMsg = "", ...);
-/*inline*/ void		TodErrorMessageBox(const char* theMessage, const char* theTitle);
+/*inline*/ void		TodErrorMessageBox(std::string_view theMessage, std::string_view theTitle);
 
 /*inline*/ void*	TodMalloc(int theSize);
 /*inline*/ void		TodFree(void* theBlock);

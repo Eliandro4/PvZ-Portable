@@ -87,10 +87,10 @@ protected:
 	bool					mByteSwap;
 
 protected:
-	void					Fail(const std::string& theErrorText);
+	void					Fail(std::string_view theErrorText);
 	void					Init();
 
-	bool					AddAttribute(XMLElement* theElement, const std::string& aAttributeKey, const std::string& aAttributeValue);
+	bool					AddAttribute(XMLElement* theElement, std::string_view aAttributeKey, std::string_view aAttributeValue);
 
 	bool					GetAsciiChar(char* theChar, bool* error);
 	bool					GetUTF8Char(char* theChar, bool* error);
@@ -116,9 +116,9 @@ public:
 	bool					OpenFile(const std::string& theFilename);
 	void					SetStringSource(std::string_view theString);
 	bool					NextElement(XMLElement* theElement);
-	std::string				GetErrorText();
+	const std::string&		GetErrorText() const;
 	int						GetCurrentLineNum();
-	std::string				GetFileName();
+	const std::string&		GetFileName() const;
 
 	inline void				AllowComments(bool doAllow) { mAllowComments = doAllow; }
 

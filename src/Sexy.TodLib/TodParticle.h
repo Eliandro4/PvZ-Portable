@@ -23,6 +23,7 @@
 #define __TODPARTICLE_H__
 
 #include <cstdint>
+#include <string_view>
 #include "TodList.h"
 #include "DataArray.h"
 #include "misc/SexyVector.h"
@@ -367,7 +368,7 @@ public:
 	TodParticle*					SpawnParticle(int theIndex, int theSpawnCount);
 	bool							CrossFadeParticle(TodParticle* theParticle, TodParticleEmitter* theToEmitter);
 	void							CrossFadeEmitter(TodParticleEmitter* theToEmitter);
-	bool							CrossFadeParticleToName(TodParticle* theParticle, const char* theEmitterName);
+	bool							CrossFadeParticleToName(TodParticle* theParticle, 	std::string_view theEmitterName);
 	void							DeleteAll();
 	void							UpdateParticleField(TodParticle* theParticle, ParticleField* theParticleField, float theParticleTimeValue, int theFieldIndex);
 	void							UpdateSystemField(ParticleField* theParticleField, float theParticleTimeValue, int theFieldIndex);
@@ -400,14 +401,14 @@ public:
     void							Update();
     void							Draw(Graphics* g);
     void							SystemMove(float theX, float theY);
-    void							OverrideColor(const char* theEmitterName, const Color& theColor);
-    void							OverrideExtraAdditiveDraw(const char* theEmitterName, bool theEnableExtraAdditiveDraw);
-    void							OverrideImage(const char* theEmitterName, Image* theImage);
-    void							OverrideFrame(const char* theEmitterName, int theFrame);
-    void							OverrideScale(const char* theEmitterName, float theScale);
-    void							CrossFade(const char* theEmitterName);
-    TodParticleEmitter*				FindEmitterByName(const char* theEmitterName);
-    TodEmitterDefinition*			FindEmitterDefByName(const char* theEmitterName);
+    void							OverrideColor(	std::string_view theEmitterName, const Color& theColor);
+    void							OverrideExtraAdditiveDraw(	std::string_view theEmitterName, bool theEnableExtraAdditiveDraw);
+    void							OverrideImage(	std::string_view theEmitterName, Image* theImage);
+    void							OverrideFrame(	std::string_view theEmitterName, int theFrame);
+    void							OverrideScale(	std::string_view theEmitterName, float theScale);
+    void							CrossFade(	std::string_view theEmitterName);
+    TodParticleEmitter*				FindEmitterByName(	std::string_view theEmitterName);
+    TodEmitterDefinition*			FindEmitterDefByName(	std::string_view theEmitterName);
 };
 
 #endif

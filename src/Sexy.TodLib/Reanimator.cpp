@@ -816,7 +816,7 @@ bool Reanimation::DrawTrack(Graphics* g, int theTrackIndex, int theRenderGroup, 
 	return true;
 }
 
-Image* Reanimation::GetCurrentTrackImage(const char* theTrackName)
+Image* Reanimation::GetCurrentTrackImage(std::string_view theTrackName)
 {
 	int aTrackIndex = FindTrackIndex(theTrackName);
 	ReanimatorTrackInstance* aTrackInstance = &mTrackInstances[aTrackIndex];
@@ -943,23 +943,23 @@ void Reanimation::Draw(Graphics* g)
 }
 
 // GOTY @Patoke: 0x477640
-int Reanimation::FindTrackIndex(const char* theTrackName)
+int Reanimation::FindTrackIndex(std::string_view theTrackName)
 {
 	for (int aTrackIndex = 0; aTrackIndex < mDefinition->mTracks.count; aTrackIndex++)
-		if (strcasecmp(mDefinition->mTracks.tracks[aTrackIndex].mName, theTrackName) == 0)
+		if (Sexy::StringEqualsNoCase(mDefinition->mTracks.tracks[aTrackIndex].mName, theTrackName))
 			return aTrackIndex;
 
-	TodTrace("Can't find track '%s'", theTrackName);
+	TodTrace("Can't find track '%.*s'", static_cast<int>(theTrackName.size()), theTrackName.data());
 	return 0;
 }
 
 // GOTY @Patoke: 0x464B18
-ReanimatorTrackInstance* Reanimation::GetTrackInstanceByName(const char* theTrackName)
+ReanimatorTrackInstance* Reanimation::GetTrackInstanceByName(std::string_view theTrackName)
 {
 	return &mTrackInstances[FindTrackIndex(theTrackName)];
 }
 
-void Reanimation::AttachToAnotherReanimation(Reanimation* theAttachReanim, const char* theTrackName)
+void Reanimation::AttachToAnotherReanimation(Reanimation* theAttachReanim, std::string_view theTrackName)
 {
 	if (theAttachReanim->mDefinition->mTracks.count <= 0)
 		return;
@@ -969,7 +969,7 @@ void Reanimation::AttachToAnotherReanimation(Reanimation* theAttachReanim, const
 	AttachReanim(theAttachReanim->GetTrackInstanceByName(theTrackName)->mAttachmentID, this, 0.0f, 0.0f);
 }
 
-void Reanimation::SetBasePoseFromAnim(const char* theTrackName)
+void Reanimation::SetBasePoseFromAnim(std::string_view theTrackName)
 {
 	int aFrameStart, aFrameCount;
 	GetFramesForLayer(theTrackName, aFrameStart, aFrameCount);
@@ -991,7 +991,7 @@ void Reanimation::GetTrackBasePoseMatrix(int theTrackIndex, SexyTransform2D& the
 	MatrixFromTransform(aTransformStart, theBasePosMatrix);
 }
 
-AttachEffect* Reanimation::AttachParticleToTrack(const char* theTrackName, TodParticleSystem* theParticleSystem, float thePosX, float thePosY)
+AttachEffect* Reanimation::AttachParticleToTrack(std::string_view theTrackName, TodParticleSystem* theParticleSystem, float thePosX, float thePosY)
 {
 	int aTrackIndex = FindTrackIndex(theTrackName);
 	ReanimatorTrackInstance* aTrackInstance = &mTrackInstances[aTrackIndex];
@@ -1017,7 +1017,7 @@ void Reanimation::GetAttachmentOverlayMatrix(int theTrackIndex, SexyTransform2D&
 	theOverlayMatrix = aTransformMatrix * aBasePoseMatrixInv;
 }
 
-void Reanimation::GetFramesForLayer(const char* theTrackName, int& theFrameStart, int& theFrameCount)
+void Reanimation::GetFramesForLayer(std::string_view theTrackName, int& theFrameStart, int& theFrameCount)
 {
 	if (mDefinition->mTracks.count == 0)  // 如果动画没有轨道
 	{
@@ -1042,7 +1042,7 @@ void Reanimation::GetFramesForLayer(const char* theTrackName, int& theFrameStart
 			theFrameCount = j - theFrameStart + 1;  // 取从起始帧至轨道最后一个非空白帧之间为帧数量
 }
 
-void Reanimation::SetFramesForLayer(const char* theTrackName)
+void Reanimation::SetFramesForLayer(std::string_view theTrackName)
 {
 	if (mAnimRate >= 0)
 		mAnimTime = 0.0f;
@@ -1052,10 +1052,10 @@ void Reanimation::SetFramesForLayer(const char* theTrackName)
 	GetFramesForLayer(theTrackName, mFrameStart, mFrameCount);
 }
 
-bool Reanimation::TrackExists(const char* theTrackName)
+bool Reanimation::TrackExists(std::string_view theTrackName)
 {
 	for (int aTrackIndex = 0; aTrackIndex < mDefinition->mTracks.count; aTrackIndex++)
-		if (strcasecmp(mDefinition->mTracks.tracks[aTrackIndex].mName, theTrackName) == 0)
+		if (Sexy::StringEqualsNoCase(mDefinition->mTracks.tracks[aTrackIndex].mName, theTrackName))
 			return true;
 	return false;
 }
@@ -1092,7 +1092,7 @@ void Reanimation::ReanimationDie()
 	}
 }
 
-void Reanimation::SetShakeOverride(const char* theTrackName, float theShakeAmount)
+void Reanimation::SetShakeOverride(std::string_view theTrackName, float theShakeAmount)
 { 
 	GetTrackInstanceByName(theTrackName)->mShakeOverride = theShakeAmount;
 }
@@ -1109,13 +1109,13 @@ void Reanimation::OverrideScale(float theScaleX, float theScaleY)
 	mOverlayMatrix.m11 = theScaleY;
 }
 
-Image* Reanimation::GetImageOverride(const char* theTrackName)
+Image* Reanimation::GetImageOverride(std::string_view theTrackName)
 {
 	return GetTrackInstanceByName(theTrackName)->mImageOverride;
 }
 
 // GOTY @Patoke: 0x477BB0
-void Reanimation::SetImageOverride(const char* theTrackName, Image* theImage)
+void Reanimation::SetImageOverride(std::string_view theTrackName, Image* theImage)
 {
 	GetTrackInstanceByName(theTrackName)->mImageOverride = theImage;
 }
@@ -1182,9 +1182,8 @@ void ReanimatorEnsureDefinitionLoaded(ReanimationType theReanimType, bool theIsP
 	TodHesitationBracket aHesitation("Load Reanim '%s'", aReanimParams->mReanimFileName);
 	if (!ReanimationLoadDefinition(aReanimParams->mReanimFileName, aReanimDef))
 	{
-		char aBuf[1024];
-		snprintf(aBuf, sizeof(aBuf), "Failed to load reanim '%s'", aReanimParams->mReanimFileName);
-		TodErrorMessageBox(aBuf, "Error");
+		std::string aBuf = Sexy::StrFormat("Failed to load reanim '%s'", aReanimParams->mReanimFileName);
+		TodErrorMessageBox(aBuf.c_str(), "Error");
 	}
 	int aDuration = aTimer.GetDuration();
 	if (aDuration > 100)  //（仅内测版）创建时间过长的报告
@@ -1223,7 +1222,7 @@ void ReanimatorFreeDefinitions()
 	gReanimationParamArraySize = 0;
 }
 
-float Reanimation::GetTrackVelocity(const char* theTrackName)
+float Reanimation::GetTrackVelocity(std::string_view theTrackName)
 {
 	ReanimatorFrameTime aFrameTime;
 	GetFrameTime(&aFrameTime);
@@ -1235,7 +1234,7 @@ float Reanimation::GetTrackVelocity(const char* theTrackName)
 	return aDis * SECONDS_PER_UPDATE * mAnimRate;  // 瞬时速率 = 两帧间的横坐标之差 * 一帧的时长 * 动画速率
 }
 
-bool Reanimation::IsTrackShowing(const char* theTrackName)
+bool Reanimation::IsTrackShowing(std::string_view theTrackName)
 {
 	ReanimatorFrameTime aFrameTime;
 	GetFrameTime(&aFrameTime);
@@ -1245,20 +1244,20 @@ bool Reanimation::IsTrackShowing(const char* theTrackName)
 	return mDefinition->mTracks.tracks[aTrackIndex].mTransforms.mTransforms[aFrameTime.mAnimFrameAfterInt].mFrame >= 0.0f;  // 返回下一整数帧是否存在图像
 }
 
-void Reanimation::ShowOnlyTrack(const char* theTrackName)
+void Reanimation::ShowOnlyTrack(std::string_view theTrackName)
 {
 	for (int i = 0; i < mDefinition->mTracks.count; i++)
 	{
 		// 轨道名与指定名称相同时，设置轨道渲染分组为正常显示，否则设置轨道渲染分组为隐藏
-		mTrackInstances[i].mRenderGroup = strcasecmp(mDefinition->mTracks.tracks[i].mName, theTrackName) == 0 ? RENDER_GROUP_NORMAL : RENDER_GROUP_HIDDEN;
+		mTrackInstances[i].mRenderGroup = Sexy::StringEqualsNoCase(mDefinition->mTracks.tracks[i].mName, theTrackName) ? RENDER_GROUP_NORMAL : RENDER_GROUP_HIDDEN;
 	}
 }
 
 // GOTY @Patoke: 0x478120
-void Reanimation::AssignRenderGroupToTrack(const char* theTrackName, int theRenderGroup)
+void Reanimation::AssignRenderGroupToTrack(std::string_view theTrackName, int theRenderGroup)
 {
 	for (int i = 0; i < mDefinition->mTracks.count; i++)
-		if (strcasecmp(mDefinition->mTracks.tracks[i].mName, theTrackName) == 0)
+		if (Sexy::StringEqualsNoCase(mDefinition->mTracks.tracks[i].mName, theTrackName))
 		{
 			mTrackInstances[i].mRenderGroup = theRenderGroup;  // 仅设置首个名称恰好为 theTrackName 的轨道
 			return;
@@ -1266,13 +1265,12 @@ void Reanimation::AssignRenderGroupToTrack(const char* theTrackName, int theRend
 }
 
 // GOTY @Patoke: 0x478170
-void Reanimation::AssignRenderGroupToPrefix(const char* theTrackName, int theRenderGroup)
+void Reanimation::AssignRenderGroupToPrefix(std::string_view theTrackName, int theRenderGroup)
 {
-	size_t aPrifixLength = strlen(theTrackName);
 	for (int i = 0; i < mDefinition->mTracks.count; i++)
 	{
-		const char* const aTrackName = mDefinition->mTracks.tracks[i].mName;
-		if (strlen(aTrackName) >= aPrifixLength && !strncasecmp(aTrackName, theTrackName, aPrifixLength))  // 轨道名称长度必须不小于指定前缀长度
+		std::string_view aTrackName(mDefinition->mTracks.tracks[i].mName);
+		if (aTrackName.size() >= theTrackName.size() && Sexy::StringEqualsNoCase(aTrackName.substr(0, theTrackName.size()), theTrackName))  // 轨道名称长度必须不小于指定前缀长度
 			mTrackInstances[i].mRenderGroup = theRenderGroup;
 	}
 }
@@ -1297,7 +1295,7 @@ bool Reanimation::ShouldTriggerTimedEvent(float theEventTime)
 		return theEventTime >= mLastFrameTime || theEventTime < mAnimTime;
 }
 // GOTY @Patoke: 0x478310
-void Reanimation::PlayReanim(const char* theTrackName, ReanimLoopType theLoopType, int theBlendTime, float theAnimRate)
+void Reanimation::PlayReanim(std::string_view theTrackName, ReanimLoopType theLoopType, int theBlendTime, float theAnimRate)
 {
 	if (theBlendTime > 0)  // 当需要补间过渡时，开始混合
 		StartBlend(theBlendTime);
@@ -1320,35 +1318,40 @@ void Reanimation::ParseAttacherTrack(const ReanimatorTransform& theTransform, At
 
 	/* 附属轨道名称格式：attacher__REANIMNAME__TRACKNAME[TAG1][TAG2]…… */
 
-	const char* aReanimName = strstr(theTransform.mText, "__");  // 指向动画名称前的双下划线
-	if (aReanimName == nullptr)  // 如果字符串中不含双下划线
+	std::string_view aText(theTransform.mText);
+	size_t aReanimNamePos = aText.find("__");  // 动画名称前的双下划线的位置
+	if (aReanimNamePos == std::string_view::npos)  // 如果字符串中不含双下划线
 		return;
-	const char* aTags = strstr(aReanimName + 2, "[");  // 动画名称之后，指向 TAG 前的中括号
-	const char* aTrackName = strstr(aReanimName + 2, "__");  // 动画名称之后，指向轨道名称前的双下划线
-	if (aTags && aTrackName && ((uintptr_t)aTags < (uintptr_t)aTrackName))  // 如果“[”之后还有双下划线，则字符串非法
+	size_t aReanimName = aReanimNamePos + 2;  // 动画名称内容的起始位置
+	size_t aTags = aText.find('[', aReanimName);  // 动画名称之后，指向 TAG 前的中括号
+	size_t aTrackName = aText.find("__", aReanimName);  // 动画名称之后，指向轨道名称前的双下划线
+	if (aTags != std::string_view::npos && aTrackName != std::string_view::npos && aTags < aTrackName)  // 如果“[”之后还有双下划线，则字符串非法
 		return;
 
-	if (aTrackName)  // 如果有定义轨道名称
+	if (aTrackName != std::string_view::npos)  // 如果有定义轨道名称
 	{
-		theAttacherInfo.mReanimName.assign(aReanimName + 2, aTrackName - aReanimName - 2);  // 取两处双下划线之间的部分（REANIMNAME）
-		if (aTags)  // 如果有定义标签
-			theAttacherInfo.mTrackName.assign(aTrackName + 2, aTags - aTrackName - 2);  // 取到 TAG 的中括号之前
+		theAttacherInfo.mReanimName.assign(aText.substr(aReanimName, aTrackName - aReanimName));  // 取两处双下划线之间的部分（REANIMNAME）
+		if (aTags != std::string_view::npos)  // 如果有定义标签
+			theAttacherInfo.mTrackName.assign(aText.substr(aTrackName + 2, aTags - aTrackName - 2));  // 取到 TAG 的中括号之前
 		else
-			theAttacherInfo.mTrackName.assign(aTrackName + 2);  // 取到字符串结尾
+			theAttacherInfo.mTrackName.assign(aText.substr(aTrackName + 2));  // 取到字符串结尾
 	}
-	else if (aTags)  // 如果未定义轨道名称但定义了标签
-		theAttacherInfo.mReanimName.assign(aReanimName + 2, aTags - aReanimName - 2);  // 取双下划线至中括号之间的部分
+	else if (aTags != std::string_view::npos)  // 如果未定义轨道名称但定义了标签
+		theAttacherInfo.mReanimName.assign(aText.substr(aReanimName, aTags - aReanimName));  // 取双下划线至中括号之间的部分
 	else  // 如果只定义了轨道名称
-		theAttacherInfo.mReanimName.assign(aReanimName + 2);  // 从双下划线之后取到字符串结尾
+		theAttacherInfo.mReanimName.assign(aText.substr(aReanimName));  // 从双下划线之后取到字符串结尾
 
-	while (aTags)  // 读取每个 TAG
+	while (aTags != std::string_view::npos)  // 读取每个 TAG
 	{
-		const char* aTagEnds = strstr(aTags + 1, "]");
-		if (aTagEnds == nullptr)  // 如果没有右中括号
+		size_t aTagEnds = aText.find(']', aTags + 1);
+		if (aTagEnds == std::string_view::npos)  // 如果没有右中括号
 			break;
-		
-		std::string aCode(aTags + 1, aTagEnds - aTags - 1);  // 取中括号内的文本
-		if (sscanf(aCode.c_str(), "%f", &theAttacherInfo.mAnimRate) != 1)  // 尝试将文本作为浮点数扫描，如果扫描成功则将结果作为动画速率
+
+		std::string aCode(aText.substr(aTags + 1, aTagEnds - aTags - 1));  // 取中括号内的文本
+		double aAnimRate;
+		if (Sexy::StringToDouble(aCode, &aAnimRate))  // 尝试将文本作为浮点数解析，如果解析成功则将结果作为动画速率
+			theAttacherInfo.mAnimRate = static_cast<float>(aAnimRate);
+		else
 		{
 			if (aCode.compare("hold") == 0)
 				theAttacherInfo.mLoopType = ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD;
@@ -1356,7 +1359,7 @@ void Reanimation::ParseAttacherTrack(const ReanimatorTransform& theTransform, At
 				theAttacherInfo.mLoopType = ReanimLoopType::REANIM_PLAY_ONCE;
 		}
 
-		aTags = strstr(aTagEnds + 1, "[");  // 继续寻找下一个 TAG 的左中括号
+		aTags = aText.find('[', aTagEnds + 1);  // 继续寻找下一个 TAG 的左中括号
 	}
 }
 
@@ -1428,7 +1431,7 @@ void Reanimation::UpdateAttacherTrack(int theTrackIndex)
 		for (unsigned int i = 0; i < gReanimationParamArraySize; i++)  // 在动画参数数组中寻找动画文件名对应的动画类型
 		{
 			const ReanimationParams* aParams = &gReanimationParamArray[i];
-			if (strcasecmp(aReanimFileName.c_str(), aParams->mReanimFileName) == 0)
+			if (Sexy::StringEqualsNoCase(aReanimFileName, aParams->mReanimFileName))
 			{
 				aReanimationType = aParams->mReanimationType;
 				break;
@@ -1474,7 +1477,7 @@ void Reanimation::UpdateAttacherTrack(int theTrackIndex)
 	AttachmentPropogateColor(aTrackInstance->mAttachmentID, aColor, mEnableExtraAdditiveDraw, mExtraAdditiveColor, mEnableExtraOverlayDraw, mExtraOverlayColor);
 }
 
-bool Reanimation::IsAnimPlaying(const char* theTrackName)
+bool Reanimation::IsAnimPlaying(std::string_view theTrackName)
 {
 	int aFrameStart, aFrameCount;
 	GetFramesForLayer(theTrackName, aFrameStart, aFrameCount);

@@ -145,15 +145,15 @@ void					FixPixelsOnAlphaEdgeForBlending(Image* theImage);
 uint32_t				AverageNearByPixels(MemoryImage* theImage, uint32_t* thePixel, int x, int y);
 void					Tod_SWTri_AddAllDrawTriFuncs();
 
-std::string				TodReplaceString(std::string_view theText, const char* theStringToFind, std::string_view theStringToSubstitute);
-std::string				TodReplaceNumberString(std::string_view theText, const char* theStringToFind, int theNumber);
+std::string				TodReplaceString(std::string_view theText, std::string_view theStringToFind, std::string_view theStringToSubstitute);
+std::string				TodReplaceNumberString(std::string_view theText, std::string_view theStringToFind, int theNumber);
 int						TodSnprintf(char* theBuffer, int theSize, const char* theFormat, ...);
 int						TodVsnprintf(char* theBuffer, int theSize, const char* theFormat, va_list theArgList);
 
 TodAllocator*			FindGlobalAllocator(int theSize);
 void                    FreeGlobalAllocators();
 
-std::string				TodGetCurrentLevelName();
+std::string_view		TodGetCurrentLevelName();
 bool					TodHasUsedCheatKeys();
 bool					TodAppCloseRequest();
 

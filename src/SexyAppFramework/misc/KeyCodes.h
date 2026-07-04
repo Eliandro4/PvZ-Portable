@@ -126,7 +126,7 @@ namespace Sexy
 	KEYCODE_ASCIIEND2	  = 0xE0
 };
 
-KeyCode	GetKeyCodeFromName(const std::string& theKeyName);
+KeyCode	GetKeyCodeFromName(std::string_view theKeyName);
 const std::string GetKeyNameFromCode(const KeyCode& theKeyCode);
 
 }

@@ -29,11 +29,9 @@
 
 using namespace Sexy;
 
-#define MAX_KEYNAME_LEN 12
-
 typedef struct
 {
-	char mKeyName[MAX_KEYNAME_LEN];
+	std::string_view mKeyName;
 	KeyCode mKeyCode;
 } KeyNameEntry;
 
@@ -128,25 +126,11 @@ static constexpr KeyNameEntry aKeyCodeArray[] =
 	{ .mKeyName = "SCROLL", .mKeyCode = KEYCODE_SCROLL }
 };
 
-KeyCode	Sexy::GetKeyCodeFromName(const std::string& theKeyName)
+KeyCode	Sexy::GetKeyCodeFromName(std::string_view theKeyName)
 {
-	char aKeyName[MAX_KEYNAME_LEN];
-
-	if (theKeyName.length() >= MAX_KEYNAME_LEN-1)
-		return KEYCODE_UNKNOWN;
-
-	strcpy(aKeyName, theKeyName.c_str());
-	//strupr(aKeyName);
-	char *s = aKeyName;
-	while (*s)
-	{
-		*s = toupper(*s);
-		s++;
-	}
-
 	if (theKeyName.length() == 1)
 	{
-		unsigned char aKeyNameChar = aKeyName[0];
+		unsigned char aKeyNameChar = (unsigned char) toupper((unsigned char) theKeyName[0]);
 
 		if ((aKeyNameChar >= (unsigned char) KEYCODE_ASCIIBEGIN) && (aKeyNameChar <= (unsigned char) KEYCODE_ASCIIEND))
 			return (KeyCode) aKeyNameChar;
@@ -156,7 +140,7 @@ KeyCode	Sexy::GetKeyCodeFromName(const std::string& theKeyName)
 	}	
 
 	for (size_t i = 0; i < sizeof(aKeyCodeArray)/sizeof(aKeyCodeArray[0]); i++)	
-		if (strcmp(aKeyName, aKeyCodeArray[i].mKeyName) == 0)
+		if (Sexy::StringEqualsNoCase(theKeyName, aKeyCodeArray[i].mKeyName))
 			return aKeyCodeArray[i].mKeyCode;	
 
 	return KEYCODE_UNKNOWN;
@@ -178,7 +162,7 @@ const std::string Sexy::GetKeyNameFromCode(const KeyCode& theKeyCode)
 
 	for (size_t i = 0; i < sizeof(aKeyCodeArray)/sizeof(aKeyCodeArray[0]); i++)	
 		if (theKeyCode == aKeyCodeArray[i].mKeyCode)
-			return aKeyCodeArray[i].mKeyName;	
+			return std::string(aKeyCodeArray[i].mKeyName);	
 
 	return "UNKNOWN";
 }

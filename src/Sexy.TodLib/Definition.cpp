@@ -735,11 +735,11 @@ bool DefinitionReadXMLString(XMLParser* theXmlParser, std::string& theValue)
     return true;
 }
 
-bool DefSymbolValueFromString(const DefSymbol* theSymbolMap, const char* theName, int* theResultValue)
+bool DefSymbolValueFromString(const DefSymbol* theSymbolMap, std::string_view theName, int* theResultValue)
 {
     while (theSymbolMap->mSymbolName != nullptr)
     {
-        if (strcasecmp(theName, theSymbolMap->mSymbolName) == 0)
+        if (Sexy::StringEqualsNoCase(theName, theSymbolMap->mSymbolName))
         {
             *theResultValue = theSymbolMap->mSymbolValue;
             return true;
@@ -800,7 +800,7 @@ bool DefinitionReadEnumField(XMLParser* theXmlParser, int* theValue, const DefSy
     if (!DefinitionReadXMLString(theXmlParser, aStringValue))
         return false;
 
-    if (DefSymbolValueFromString(theSymbolMap, aStringValue.c_str(), theValue))
+    if (DefSymbolValueFromString(theSymbolMap, aStringValue, theValue))
         return true;
 
     DefinitionXmlError(theXmlParser, "Can't parse enum value '%s'", aStringValue.c_str());
@@ -1049,7 +1049,7 @@ bool DefinitionReadFloatTrackField(XMLParser* theXmlParser, FloatParameterTrack*
 bool DefinitionReadFlagField(XMLParser* theXmlParser, const std::string& theElementName, uint* theResultValue, const DefSymbol* theSymbolMap)
 {
     int aValue;
-    if (!DefSymbolValueFromString(theSymbolMap, theElementName.c_str(), &aValue))
+    if (!DefSymbolValueFromString(theSymbolMap, theElementName, &aValue))
         return false;
 
     std::string aStringValue;
@@ -1134,7 +1134,7 @@ bool DefinitionReadField(XMLParser* theXmlParser, const DefMap* theDefMap, void*
         if (aField->mFieldType == DefFieldType::DT_FLAGS && DefinitionReadFlagField(theXmlParser, aXMLElement.mValue, (uint*)pVar, (const DefSymbol*)aField->mExtraData))
             return true;
         
-        if (strcasecmp(aXMLElement.mValue.c_str(), aField->mFieldName) == 0)  // 判断 aXMLElement 定义的是否为该成员变量
+        if (Sexy::StringEqualsNoCase(aXMLElement.mValue, aField->mFieldName))  // 判断 aXMLElement 定义的是否为该成员变量
         {
             bool aSuccess;
             switch (aField->mFieldType)

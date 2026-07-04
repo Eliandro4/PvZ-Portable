@@ -26,6 +26,7 @@
 #include "misc/MTRand.h"
 #include <algorithm>
 #include <cctype>
+#include <charconv>
 #include <cstdlib>
 #include <filesystem>
 #include <chrono>
@@ -49,11 +50,6 @@ namespace Sexy
 	std::filesystem::path gAppDataFolder;
 	std::filesystem::path gResourceFolder;
 	std::string gResourceFolderStr; // Cached string to avoid repeated conversions
-}
-
-static inline char ToLowerAscii(char c)
-{
-	return (char)std::tolower((unsigned char)c);
 }
 
 void Sexy::PrintF(const char *text, ...)
@@ -160,37 +156,34 @@ std::string Sexy::Trim(std::string_view theString)
 	return std::string(theString.substr(start, end - start + 1));
 }
 
-bool Sexy::StringToInt(const std::string& theString, int* theIntVal)
+bool Sexy::StringToInt(std::string_view theString, int* theIntVal)
 {
 	if (theIntVal == nullptr)
 		return false;
-
 	*theIntVal = 0;
-	if (theString.empty())
-		return false;
 
-	const char* start = theString.c_str();
-	char* end = nullptr;
-	long value = std::strtol(start, &end, 0);
-	if (end != start + theString.size())
+	int value = 0;
+	const char* const begin = theString.data();
+	const char* const end = begin + theString.size();
+	const auto [ptr, ec] = std::from_chars(begin, end, value);
+	// Require the whole string to be consumed (matches the old strtol behaviour).
+	if (ec != std::errc{} || ptr != end)
 		return false;
-	*theIntVal = (int)value;
+	*theIntVal = value;
 	return true;
 }
 
-bool Sexy::StringToDouble(const std::string& theString, double* theDoubleVal)
+bool Sexy::StringToDouble(std::string_view theString, double* theDoubleVal)
 {
 	if (theDoubleVal == nullptr)
 		return false;
-
 	*theDoubleVal = 0.0;
-	if (theString.empty())
-		return false;
 
-	const char* start = theString.c_str();
-	char* end = nullptr;
-	double value = std::strtod(start, &end);
-	if (end != start + theString.size())
+	double value = 0.0;
+	const char* const begin = theString.data();
+	const char* const end = begin + theString.size();
+	const auto [ptr, ec] = std::from_chars(begin, end, value);
+	if (ec != std::errc{} || ptr != end)
 		return false;
 	*theDoubleVal = value;
 	return true;
@@ -407,10 +400,10 @@ std::string Sexy::Evaluate(std::string_view theString, const DefinesMap& theDefi
 		if (aSecondPercentPos == std::string::npos)
 			break;
 
-		std::string aName = anEvaluatedString.substr(aPercentPos + 1, aSecondPercentPos - aPercentPos - 1);
+		std::string_view aName = anEvaluatedString.substr(aPercentPos + 1, aSecondPercentPos - aPercentPos - 1);
 
 		std::string aValue;
-		DefinesMap::const_iterator anItr = theDefinesMap.find(aName);		
+		DefinesMap::const_iterator anItr = theDefinesMap.find(aName);
 		if (anItr != theDefinesMap.end())
 			aValue = anItr->second;
 		else
@@ -440,9 +433,8 @@ std::string Sexy::XMLDecodeString(std::string_view theString)
 
 			if (aSemiPos != std::string::npos)
 			{
-				std::string anEntName(theString.substr(i+1, aSemiPos-i-1));
+				std::string_view anEntName = theString.substr(i+1, aSemiPos-i-1);
 				i = aSemiPos;
-											
 				if (anEntName == "lt")
 					c = '<';
 				else if (anEntName == "amp")
@@ -531,53 +523,6 @@ std::string Sexy::Lower(std::string_view _data)
 
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-int Sexy::StrFindNoCase(const char *theStr, const char *theFind)
-{
-	int p1, p2;
-	int cp = 0;
-	const int len1 = (int)strlen(theStr);
-	const int len2 = (int)strlen(theFind);
-	while (cp < len1)
-	{
-		p1 = cp;
-		p2 = 0;
-		while (p1 < len1 && p2 < len2)
-		{
-			if (ToLowerAscii(theStr[p1]) != ToLowerAscii(theFind[p2]))
-				break;
-
-			p1++; p2++;
-		}
-		if(p2==len2)
-			return p1-len2;
-
-		cp++;
-	}
-
-	return -1;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-bool Sexy::StrPrefixNoCase(const char *theStr, const char *thePrefix, int maxLength)
-{
-	int i;
-	char c1 = 0, c2 = 0;
-	for (i=0; i<maxLength; i++)
-	{
-		c1 = ToLowerAscii(*theStr++);
-		c2 = ToLowerAscii(*thePrefix++);
-
-		if (c1==0 || c2==0)
-			break;
-
-		if (c1!=c2)
-			return false;
-	}
-
-	return c2==0 || i==maxLength;
-}
-
 void Sexy::SMemR(void*& _Src, void* _Dst, size_t _Size)
 {
 	memcpy(_Dst, _Src, _Size);

@@ -49,7 +49,7 @@ public:
 
 public:
 	SingleDataElement();
-	SingleDataElement(const std::string theString);
+	SingleDataElement(std::string_view theString);
 	~SingleDataElement() override;
 
 	DataElement*			Duplicate() override;
@@ -93,10 +93,10 @@ public:
 	DataElementMap			mDefineMap;
 
 public:
-	virtual bool			Error(const std::string& theError);
-	virtual DataElement*	Dereference(const std::string& theString);
-	bool					IsImmediate(const std::string& theString);
-	std::string				Unquote(const std::string& theQuotedString);
+	virtual bool			Error(std::string_view theError);
+	virtual DataElement*	Dereference(std::string_view theString);
+	bool					IsImmediate(std::string_view theString);
+	std::string				Unquote(std::string_view theQuotedString);
 	bool					GetValues(ListDataElement* theSource, ListDataElement* theValues);
 	std::string				DataElementToString(DataElement* theDataElement);
 	bool					DataToString(DataElement* theSource, std::string* theString);
@@ -105,8 +105,8 @@ public:
 	bool					DataToList(DataElement* theSource, ListDataElement* theValues);
 	bool					DataToIntVector(DataElement* theSource, std::vector<int>* theIntVector);
 	bool					DataToDoubleVector(DataElement* theSource, DoubleVector* theDoubleVector);
-	bool					ParseToList(const std::string& theString, ListDataElement* theList, bool expectListEnd, int* theStringPos);
-	bool					ParseDescriptorLine(const std::string& theDescriptorLine);
+	bool					ParseToList(std::string_view theString, ListDataElement* theList, bool expectListEnd, int* theStringPos);
+	bool					ParseDescriptorLine(std::string_view theDescriptorLine);
 
 	// You must implement this one
 	virtual bool			HandleCommand(const ListDataElement& theParams) = 0;

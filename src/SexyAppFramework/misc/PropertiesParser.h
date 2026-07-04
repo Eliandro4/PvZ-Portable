@@ -42,7 +42,7 @@ public:
 	bool					mHasFailed;
 
 protected:
-	void					Fail(const std::string& theErrorText);
+	void					Fail(std::string_view theErrorText);
 
 	bool					ParseSingleElement(std::string* theString);
 	bool					ParseStringArray(std::vector<std::string>* theStringVector);
@@ -55,7 +55,7 @@ public:
 
 	bool					ParsePropertiesFile(const std::string& theFilename);
 	bool					ParsePropertiesBuffer(const Buffer& theBuffer);
-	std::string				GetErrorText();
+	const std::string&		GetErrorText();
 };
 
 }

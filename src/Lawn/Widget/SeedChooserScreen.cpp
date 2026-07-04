@@ -571,7 +571,7 @@ bool SeedChooserScreen::DisplayRepickWarningDialog(const char* theMessage)
 		"[DIALOG_BUTTON_YES]", 
 		"[REPICK_BUTTON]", 
 		Dialog::BUTTONS_YES_NO
-	) == Dialog::ID_YES;
+	);
 }
 
 bool SeedChooserScreen::FlyersAreComming()

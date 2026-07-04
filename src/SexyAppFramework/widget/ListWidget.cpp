@@ -143,10 +143,9 @@ void ListWidget::Sort(bool ascending)
 	}
 }
 	
-std::string ListWidget::GetStringAt(int theIdx)
+const std::string& ListWidget::GetStringAt(int theIdx) const
 {
-	return
-		mLines[theIdx];
+	return mLines[theIdx];
 }
 	
 void ListWidget::Resize(int theX, int theY, int theWidth, int theHeight)
@@ -165,7 +164,7 @@ void ListWidget::Resize(int theX, int theY, int theWidth, int theHeight)
 		mScrollbar->SetPageSize(aPageSize);
 }
 	
-int ListWidget::AddLine(const std::string& theLine, bool alphabetical)
+int ListWidget::AddLine(std::string_view theLine, bool alphabetical)
 {	
 	int anIdx = -1;
 	bool inserted = false;
@@ -173,7 +172,7 @@ int ListWidget::AddLine(const std::string& theLine, bool alphabetical)
 	if (alphabetical) 
 	{	
 		for (int i = 0;	i < (int) mLines.size(); i++) 		
-			if (strcmp(theLine.c_str(), mLines[i].c_str()) < 0) 
+			if (theLine < mLines[i]) 
 			{
 				anIdx = i;
 						
@@ -185,7 +184,7 @@ int ListWidget::AddLine(const std::string& theLine, bool alphabetical)
 				while (aListWidget != nullptr) 
 				{
 					if (aListWidget == this)
-						aListWidget->mLines.insert(aListWidget->mLines.begin() + i, theLine);
+						aListWidget->mLines.insert(aListWidget->mLines.begin() + i, std::string(theLine));
 					else 
 						aListWidget->mLines.insert(aListWidget->mLines.begin() + i, "-");
 					
@@ -212,7 +211,7 @@ int ListWidget::AddLine(const std::string& theLine, bool alphabetical)
 		while (aListWidget!=nullptr) 
 		{
 			if (aListWidget==this) 
-				aListWidget->mLines.push_back(theLine);
+				aListWidget->mLines.push_back(std::string(theLine));
 			else 
 				aListWidget->mLines.push_back("-");
 						
@@ -230,7 +229,7 @@ int ListWidget::AddLine(const std::string& theLine, bool alphabetical)
 }
 
 	
-void ListWidget::SetLine(int theIdx, const std::string& theString)
+void ListWidget::SetLine(int theIdx, std::string_view theString)
 {
 	mLines[theIdx] = theString;	
 	MarkDirty();
@@ -241,16 +240,16 @@ int ListWidget::GetLineCount()
 	return mLines.size();	
 }
 	
-int ListWidget::GetLineIdx(const std::string& theLine)
+int ListWidget::GetLineIdx(std::string_view theLine)
 {	
 	for (ulong i = 0; i < mLines.size(); i++)	
-		if (strcmp(mLines[i].c_str(), theLine.c_str()) == 0)
+		if (mLines[i] == theLine)
 			return i;
 	
 	return -1;
 }
 	
-void ListWidget::SetColor(const std::string& theLine, const Color& theColor)
+void ListWidget::SetColor(std::string_view theLine, const Color& theColor)
 {
 	int anIdx = GetLineIdx(theLine);
 	SetLineColor(anIdx, theColor);	

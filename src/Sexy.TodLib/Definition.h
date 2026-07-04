@@ -168,7 +168,7 @@ bool                    DefinitionIsCompiled(const std::string& theXMLFilePath);
 bool                    DefinitionReadCompiledFile(const std::string& theCompiledFilePath, const DefMap* theDefMap, void* theDefinition);
 void                    DefinitionFillWithDefaults(const DefMap* theDefMap, void* theDefinition);
 void                    DefinitionXmlError(XMLParser* theXmlParser, char* theFormat, ...);
-bool                    DefSymbolValueFromString(const DefSymbol* theSymbolMap, const char* theName, int* theResultValue);
+bool                    DefSymbolValueFromString(const DefSymbol* theSymbolMap, std::string_view theName, int* theResultValue);
 bool                    DefinitionReadXMLString(XMLParser* theXmlParser, std::string& theValue);
 bool                    DefinitionReadIntField(XMLParser* theXmlParser, int* theValue);
 bool                    DefinitionReadFloatField(XMLParser* theXmlParser, float* theValue);

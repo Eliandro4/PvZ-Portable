@@ -36,13 +36,13 @@ DescParser::~DescParser()
 {
 }
 
-bool DescParser::Error(const std::string& theError)
+bool DescParser::Error(std::string_view theError)
 {
 	mError = theError;
 	return false;
 }
 
-DataElement* DescParser::Dereference(const std::string& theString)
+DataElement* DescParser::Dereference(std::string_view theString)
 {
 	std::string aDefineName = StringToUpper(theString);
 
@@ -53,13 +53,13 @@ DataElement* DescParser::Dereference(const std::string& theString)
 		return nullptr;
 }
 
-bool DescParser::IsImmediate(const std::string& theString)
+bool DescParser::IsImmediate(std::string_view theString)
 {
 	return (((theString[0] >= '0') && (theString[0] <= '9')) || (theString[0] == '-') || 
 		(theString[0] == '+') || (theString[0] == '\'') || (theString[0] == '"'));
 }
 
-std::string DescParser::Unquote(const std::string& theQuotedString)
+std::string DescParser::Unquote(std::string_view theQuotedString)
 {
 	if ((theQuotedString[0] == '\'') || (theQuotedString[0] == '"'))
 	{
@@ -86,7 +86,7 @@ std::string DescParser::Unquote(const std::string& theQuotedString)
 		return aLiteralString;
 	}
 	else
-		return theQuotedString;
+		return std::string(theQuotedString);
 }
 
 bool DescParser::GetValues(ListDataElement* theSource, ListDataElement* theValues)
@@ -313,7 +313,7 @@ bool DescParser::DataToDoubleVector(DataElement* theSource, DoubleVector* theDou
 	return true;
 }
 
-bool DescParser::ParseToList(const std::string& theString, ListDataElement* theList, bool expectListEnd, int* theStringPos)
+bool DescParser::ParseToList(std::string_view theString, ListDataElement* theList, bool expectListEnd, int* theStringPos)
 {
 	bool inSingleQuotes = false;
 	bool inDoubleQuotes = false;
@@ -423,7 +423,7 @@ bool DescParser::ParseToList(const std::string& theString, ListDataElement* theL
 	return true;
 }
 
-bool DescParser::ParseDescriptorLine(const std::string& theDescriptorLine)
+bool DescParser::ParseDescriptorLine(std::string_view theDescriptorLine)
 {
 	ListDataElement aParams;
 	if (!ParseToList(theDescriptorLine, &aParams, false, nullptr))

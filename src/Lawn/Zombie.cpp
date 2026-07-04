@@ -3294,7 +3294,7 @@ void Zombie::OverrideParticleScale(TodParticleSystem* aParticle)
 {
     if (aParticle)
     {
-        aParticle->OverrideScale(nullptr, mScaleZombie);
+        aParticle->OverrideScale("", mScaleZombie);
     }
 }
 
@@ -3305,13 +3305,13 @@ void Zombie::OverrideParticleColor(TodParticleSystem* aParticle)
     {
         if (mMindControlled)
         {
-            aParticle->OverrideColor(nullptr, ZOMBIE_MINDCONTROLLED_COLOR);
-            aParticle->OverrideExtraAdditiveDraw(nullptr, true);
+            aParticle->OverrideColor("", ZOMBIE_MINDCONTROLLED_COLOR);
+            aParticle->OverrideExtraAdditiveDraw("", true);
         }
         else if (mChilledCounter > 0 || mIceTrapCounter > 0)
         {
-            aParticle->OverrideColor(nullptr, Color(75, 75, 255, 255));
-            aParticle->OverrideExtraAdditiveDraw(nullptr, true);
+            aParticle->OverrideColor("", Color(75, 75, 255, 255));
+            aParticle->OverrideExtraAdditiveDraw("", true);
         }
     }
 }
@@ -3448,49 +3448,49 @@ void Zombie::DropHead(unsigned int theDamageFlags)
         {
             ReanimShowPrefix("Zombie_disco_chops", RENDER_GROUP_HIDDEN);
             ReanimShowPrefix("Zombie_disco_glasses", RENDER_GROUP_HIDDEN);
-            aParticle->OverrideImage(nullptr, IMAGE_ZOMBIEDANCERHEAD);
+            aParticle->OverrideImage("", IMAGE_ZOMBIEDANCERHEAD);
         }
         else if (mZombieType == ZombieType::ZOMBIE_BACKUP_DANCER)
         {
             ReanimShowPrefix("Zombie_disco_chops", RENDER_GROUP_HIDDEN);
             ReanimShowPrefix("Zombie_backup_stash", RENDER_GROUP_HIDDEN);
-            aParticle->OverrideImage(nullptr, IMAGE_ZOMBIEBACKUPDANCERHEAD);
+            aParticle->OverrideImage("", IMAGE_ZOMBIEBACKUPDANCERHEAD);
         }
         else if (mZombieType == ZombieType::ZOMBIE_BOBSLED)
         {
-            aParticle->OverrideImage(nullptr, IMAGE_ZOMBIEBOBSLEDHEAD);
+            aParticle->OverrideImage("", IMAGE_ZOMBIEBOBSLEDHEAD);
         }
         else if (mZombieType == ZombieType::ZOMBIE_LADDER)
         {
-            aParticle->OverrideImage(nullptr, IMAGE_ZOMBIELADDERHEAD);
+            aParticle->OverrideImage("", IMAGE_ZOMBIELADDERHEAD);
         }
         else if (mZombieType == ZombieType::ZOMBIE_IMP)
         {
-            aParticle->OverrideImage(nullptr, IMAGE_ZOMBIEIMPHEAD);
+            aParticle->OverrideImage("", IMAGE_ZOMBIEIMPHEAD);
         }
         else if (mZombieType == ZombieType::ZOMBIE_FOOTBALL)
         {
-            aParticle->OverrideImage(nullptr, IMAGE_ZOMBIEFOOTBALLHEAD);
+            aParticle->OverrideImage("", IMAGE_ZOMBIEFOOTBALLHEAD);
         }
         else if (mZombieType == ZombieType::ZOMBIE_POLEVAULTER)
         {
-            aParticle->OverrideImage(nullptr, IMAGE_ZOMBIEPOLEVAULTERHEAD);
+            aParticle->OverrideImage("", IMAGE_ZOMBIEPOLEVAULTERHEAD);
         }
         else if (mZombieType == ZombieType::ZOMBIE_SNORKEL)
         {
-            aParticle->OverrideImage(nullptr, IMAGE_REANIM_ZOMBIE_SNORKLE_HEAD);
+            aParticle->OverrideImage("", IMAGE_REANIM_ZOMBIE_SNORKLE_HEAD);
         }
         else if (mZombieType == ZombieType::ZOMBIE_DIGGER)
         {
-            aParticle->OverrideImage(nullptr, IMAGE_ZOMBIEDIGGERHEAD);
+            aParticle->OverrideImage("", IMAGE_ZOMBIEDIGGERHEAD);
         }
         else if (mZombieType == ZombieType::ZOMBIE_DOLPHIN_RIDER)
         {
-            aParticle->OverrideImage(nullptr, IMAGE_ZOMBIEDOLPHINRIDERHEAD);
+            aParticle->OverrideImage("", IMAGE_ZOMBIEDOLPHINRIDERHEAD);
         }
         else if (mZombieType == ZombieType::ZOMBIE_YETI)
         {
-            aParticle->OverrideImage(nullptr, IMAGE_ZOMBIEYETIHEAD);
+            aParticle->OverrideImage("", IMAGE_ZOMBIEYETIHEAD);
         }
     }
 
@@ -3506,7 +3506,7 @@ void Zombie::DropHead(unsigned int theDamageFlags)
         Image* aMustacheImage = aBodyReanim->GetImageOverride("Zombie_mustache");
         if (aMustacheParticle && aMustacheImage)
         {
-            aMustacheParticle->OverrideImage(nullptr, aMustacheImage);
+            aMustacheParticle->OverrideImage("", aMustacheImage);
         }
     }
     if (mBoard->mFutureMode)
@@ -3540,7 +3540,7 @@ void Zombie::DropHead(unsigned int theDamageFlags)
             OverrideParticleScale(aSunglassParticle);
             if (aSunglassParticle)
             {
-                aSunglassParticle->OverrideFrame(nullptr, aFrame);
+                aSunglassParticle->OverrideFrame("", aFrame);
             }
         }
     }
@@ -3701,38 +3701,38 @@ void Zombie::SetupReanimForLostArm(unsigned int theDamageFlags)
             switch (mZombieType)
             {
             case ZombieType::ZOMBIE_FOOTBALL:
-                aParticle->OverrideImage(nullptr, IMAGE_REANIM_ZOMBIE_FOOTBALL_LEFTARM_HAND);
+                aParticle->OverrideImage("", IMAGE_REANIM_ZOMBIE_FOOTBALL_LEFTARM_HAND);
                 break;
             case ZombieType::ZOMBIE_NEWSPAPER:
-                aParticle->OverrideImage(nullptr, IMAGE_REANIM_ZOMBIE_PAPER_LEFTARM_LOWER);
+                aParticle->OverrideImage("", IMAGE_REANIM_ZOMBIE_PAPER_LEFTARM_LOWER);
                 break;
             case ZombieType::ZOMBIE_DANCER:
-                aParticle->OverrideImage(nullptr, IMAGE_REANIM_ZOMBIE_DISCO_OUTERARM_HAND);
+                aParticle->OverrideImage("", IMAGE_REANIM_ZOMBIE_DISCO_OUTERARM_HAND);
                 break;
             case ZombieType::ZOMBIE_BACKUP_DANCER:
-                aParticle->OverrideImage(nullptr, IMAGE_REANIM_ZOMBIE_BACKUP_INNERARM_HAND);
+                aParticle->OverrideImage("", IMAGE_REANIM_ZOMBIE_BACKUP_INNERARM_HAND);
                 break;
             case ZombieType::ZOMBIE_BOBSLED:
-                aParticle->OverrideImage(nullptr, IMAGE_REANIM_ZOMBIE_BOBSLED_OUTERARM_HAND);
+                aParticle->OverrideImage("", IMAGE_REANIM_ZOMBIE_BOBSLED_OUTERARM_HAND);
                 break;
             case ZombieType::ZOMBIE_IMP:
-                aParticle->OverrideImage(nullptr, IMAGE_REANIM_ZOMBIE_IMP_ARM2);
+                aParticle->OverrideImage("", IMAGE_REANIM_ZOMBIE_IMP_ARM2);
                 break;
             case ZombieType::ZOMBIE_YETI:
-                aParticle->OverrideImage(nullptr, IMAGE_REANIM_ZOMBIE_YETI_OUTERARM_HAND);
+                aParticle->OverrideImage("", IMAGE_REANIM_ZOMBIE_YETI_OUTERARM_HAND);
                 break;
             case ZombieType::ZOMBIE_JACK_IN_THE_BOX:
-                aParticle->OverrideImage(nullptr, IMAGE_ZOMBIEJACKBOXARM);
+                aParticle->OverrideImage("", IMAGE_ZOMBIEJACKBOXARM);
                 break;
             case ZombieType::ZOMBIE_DIGGER:
-                aParticle->OverrideImage(nullptr, IMAGE_ZOMBIEDIGGERARM);
+                aParticle->OverrideImage("", IMAGE_ZOMBIEDIGGERARM);
                 break;
             case ZombieType::ZOMBIE_POLEVAULTER:
             case ZombieType::ZOMBIE_BALLOON:
             case ZombieType::ZOMBIE_DOLPHIN_RIDER:
             case ZombieType::ZOMBIE_POGO:
             case ZombieType::ZOMBIE_LADDER:
-                aParticle->OverrideImage(nullptr, IMAGE_REANIM_ZOMBIE_OUTERARM_HAND);
+                aParticle->OverrideImage("", IMAGE_REANIM_ZOMBIE_OUTERARM_HAND);
                 break;
             default:
                 break;
@@ -9984,7 +9984,7 @@ void Zombie::BossHeadSpitEffect()
         TodParticleSystem* aParticle = mApp->AddTodParticle(aFlamePosX, aFlamePosY, mRenderOrder + 2, ParticleEffect::PARTICLE_ZOMBIE_BOSS_FIREBALL);
         if (aParticle)
         {
-            aParticle->OverrideImage(nullptr, IMAGE_ZOMBIE_BOSS_ICEBALL_PARTICLES);
+            aParticle->OverrideImage("", IMAGE_ZOMBIE_BOSS_ICEBALL_PARTICLES);
         }
     }
 

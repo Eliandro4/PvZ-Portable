@@ -110,7 +110,7 @@ public:
 	std::string				mFontErrorHeader;	
 
 public:
-	bool					Error(const std::string& theError) override;
+	bool					Error(std::string_view theError) override;
 
 	bool					GetColorFromDataElement(DataElement *theElement, Color &theColor);
 	bool					DataToLayer(DataElement* theSource, FontLayer** theFontLayer);
@@ -199,10 +199,10 @@ public:
 	virtual int				GetPointSize();
 	virtual void			SetScale(double theScale);
 	virtual int				GetDefaultPointSize();
-	virtual bool			AddTag(const std::string& theTagName);	
-	virtual bool			RemoveTag(const std::string& theTagName);
-	virtual bool			HasTag(const std::string& theTagName);
-	virtual std::string		GetDefine(const std::string& theName);
+	virtual bool			AddTag(std::string_view theTagName);	
+	virtual bool			RemoveTag(std::string_view theTagName);
+	virtual bool			HasTag(std::string_view theTagName);
+	virtual std::string		GetDefine(std::string_view theName);
 
 	virtual void			Prepare();
 	char32_t				GetMappedChar(char32_t theChar);

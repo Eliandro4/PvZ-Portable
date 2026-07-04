@@ -5532,7 +5532,7 @@ void Board::UpdateIce()
 			}
 
 			int anAlpha = ClampInt(mIceTimer[aRow] / 10, 0, 255);
-			aParticleIce->OverrideColor(nullptr, Color(255, 255, 255, anAlpha));
+			aParticleIce->OverrideColor("", Color(255, 255, 255, anAlpha));
 		}
 	}
 }
@@ -6675,29 +6675,34 @@ void Board::DrawProgressMeter(Graphics* g)
 	// @Patoke: updated these
 	if (mApp->mGameMode == GameMode::GAMEMODE_CHALLENGE_BEGHOULED || mApp->mGameMode == GameMode::GAMEMODE_CHALLENGE_BEGHOULED_TWIST)
 	{
-		std::string aMatchStr = StrFormat("%d/%d %s", mChallenge->mChallengeScore, 75, TodStringTranslate("[MATCHES]").c_str());
+		std::string aMatches = TodStringTranslate("[MATCHES]");
+		std::string aMatchStr = StrFormat("%d/%d %s", mChallenge->mChallengeScore, 75, aMatches.c_str());
 		TodDrawString(g, aMatchStr, aPosX, 589, Sexy::FONT_DWARVENTODCRAFT12, aColor, DrawStringJustification::DS_ALIGN_CENTER);
 	}
 	else if (mApp->IsSquirrelLevel())
 	{
-		std::string aMatchStr = StrFormat("%d/%d %s", mChallenge->mChallengeScore, 7, TodStringTranslate("[SQUIRRELS]").c_str());
+		std::string aSquirrels = TodStringTranslate("[SQUIRRELS]");
+		std::string aMatchStr = StrFormat("%d/%d %s", mChallenge->mChallengeScore, 7, aSquirrels.c_str());
 		TodDrawString(g, aMatchStr, aPosX, 589, Sexy::FONT_DWARVENTODCRAFT12, aColor, DrawStringJustification::DS_ALIGN_CENTER);
 	}
 	else if (mApp->mGameMode == GameMode::GAMEMODE_CHALLENGE_SLOT_MACHINE)
 	{
 		int aSunMoney = ClampInt(mSunMoney, 0, 2000);
-		std::string aMatchStr = StrFormat("%d/%d %s", aSunMoney, 2000, TodStringTranslate("[SUN]").c_str());
+		std::string aSun = TodStringTranslate("[SUN]");
+		std::string aMatchStr = StrFormat("%d/%d %s", aSunMoney, 2000, aSun.c_str());
 		TodDrawString(g, aMatchStr, aPosX, 589, Sexy::FONT_DWARVENTODCRAFT12, aColor, DrawStringJustification::DS_ALIGN_CENTER);
 	}
 	else if (mApp->mGameMode == GameMode::GAMEMODE_CHALLENGE_ZOMBIQUARIUM)
 	{
 		int aSunMoney = ClampInt(mSunMoney, 0, 1000);
-		std::string aMatchStr = StrFormat("%d/%d %s", aSunMoney, 1000, TodStringTranslate("[SUN]").c_str());
+		std::string aSun = TodStringTranslate("[SUN]");
+		std::string aMatchStr = StrFormat("%d/%d %s", aSunMoney, 1000, aSun.c_str());
 		TodDrawString(g, aMatchStr, aPosX, 589, Sexy::FONT_DWARVENTODCRAFT12, aColor, DrawStringJustification::DS_ALIGN_CENTER);
 	}
 	else if (mApp->IsIZombieLevel())
 	{
-		std::string aMatchStr = StrFormat("%d/%d %s", mChallenge->mChallengeScore, 5, TodStringTranslate("[BRAINS]").c_str());
+		std::string aBrains = TodStringTranslate("[BRAINS]");
+		std::string aMatchStr = StrFormat("%d/%d %s", mChallenge->mChallengeScore, 5, aBrains.c_str());
 		TodDrawString(g, aMatchStr, aPosX, 589, Sexy::FONT_DWARVENTODCRAFT12, aColor, DrawStringJustification::DS_ALIGN_CENTER);
 	}
 	else if (ProgressMeterHasFlags())

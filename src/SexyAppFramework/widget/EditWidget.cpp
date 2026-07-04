@@ -87,7 +87,7 @@ void EditWidget::AddWidthCheckFont(_Font *theFont, int theMaxPixels)
 	aCheck.mFont = theFont->Duplicate();
 }
 
-void EditWidget::SetText(const std::string& theText, bool leftPosToZero)
+void EditWidget::SetText(std::string_view theText, bool leftPosToZero)
 {
 	mString = theText;
 	mCursorPos = mString.length();

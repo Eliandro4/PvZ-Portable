@@ -27,6 +27,7 @@
 
 #include "ScrollListener.h"
 #include "Widget.h"
+#include <string_view>
 
 namespace Sexy 
 {
@@ -88,13 +89,13 @@ public:
 
 	virtual std::string			GetSortKey(int theIdx);
 	virtual void				Sort(bool ascending);
-	virtual std::string			GetStringAt(int theIdx);
+	virtual const std::string&	GetStringAt(int theIdx) const;
 	void						Resize(int theX, int theY, int theWidth, int theHeight) override;
-	virtual int					AddLine(const std::string& theLine, bool alphabetical);
-	virtual void				SetLine(int theIdx, const std::string& theString);
+	virtual int					AddLine(std::string_view theLine, bool alphabetical);
+	virtual void				SetLine(int theIdx, std::string_view theString);
 	virtual int					GetLineCount();
-	virtual int					GetLineIdx(const std::string& theLine);
-	virtual void				SetColor(const std::string& theLine, const Color& theColor);
+	virtual int					GetLineIdx(std::string_view theLine);
+	virtual void				SetColor(std::string_view theLine, const Color& theColor);
 	void						SetColor(int theIdx, const Color& theColor) override;
 	virtual void				SetLineColor(int theIdx, const Color& theColor);	
 	virtual void				RemoveLine(int theIdx);

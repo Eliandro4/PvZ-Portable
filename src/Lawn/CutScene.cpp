@@ -2202,8 +2202,10 @@ void CutScene::UpdateUpsell()
 			Reanimation* aReanimHead = mApp->AddReanimation(0, 0, 0, ReanimationType::REANIM_THREEPEATER);
 			aReanimHead->mLoopType = ReanimLoopType::REANIM_LOOP;
 			aReanimHead->mAnimRate = aReanimThreepeater->mAnimRate;
-			aReanimHead->SetFramesForLayer(StrFormat("anim_head_idle%d", i).c_str());
-			aReanimHead->AttachToAnotherReanimation(aReanimThreepeater, StrFormat("anim_head%d", i).c_str());
+			std::string aHeadIdleName = Sexy::StrFormat("anim_head_idle%d", i);
+			aReanimHead->SetFramesForLayer(aHeadIdleName);
+			std::string aHeadName = Sexy::StrFormat("anim_head%d", i);
+			aReanimHead->AttachToAnotherReanimation(aReanimThreepeater, aHeadName);
 		}
 		AttachEffect* anAttachEffect = AttachReanim(aCrazyDaveReanim->GetTrackInstanceByName("Dave_body1")->mAttachmentID, aReanimThreepeater, 0.0f, 0.0f);
 		TodScaleRotateTransformMatrix(anAttachEffect->mOffset, -70.0f, 260.0f, 0.5f, 1.2f, 1.2f);

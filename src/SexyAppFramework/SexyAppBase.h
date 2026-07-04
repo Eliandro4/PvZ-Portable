@@ -409,7 +409,7 @@ public:
 	// Public methods
 	virtual void			BeginPopup();
 	virtual void			EndPopup();
-	virtual int				MsgBox(const std::string &theText, const std::string &theTitle = "Message", int theFlags = 0);
+	virtual int				MsgBox(const std::string& theText, const std::string& theTitle = "Message", int theFlags = 0);
 	virtual void			Popup(const std::string& theString);
 	virtual void			LogScreenSaverError(const std::string &theError);
 	virtual void			SafeDeleteWidget(Widget* theWidget);	
@@ -417,7 +417,7 @@ public:
 	virtual void			URLOpenFailed(const std::string& theURL);
 	virtual void			URLOpenSucceeded(const std::string& theURL);
 	virtual bool			OpenURL(const std::string& theURL, bool shutdownOnOpen = false);	
-	virtual std::string		GetProductVersion(const std::string& thePath);	
+	virtual std::string		GetProductVersion(const std::string& thePath);
 
 	virtual void			SEHOccured();
 	virtual std::string		GetGameSEHInfo();
@@ -427,7 +427,7 @@ public:
 	virtual void			DoParseCmdLine();
 	void					SetArgs(int argc, char** argv);
 	virtual void			ParseCmdLine(const std::string& theCmdLine);
-	virtual void			HandleCmdLineParam(const std::string& theParamName, const std::string& theParamValue);
+	virtual void			HandleCmdLineParam(std::string_view theParamName, std::string_view theParamValue);
 	virtual void			HandleNotifyGameMessage(int theType); // for HWND_BROADCAST of mNotifyGameMessage (0-1000 are reserved for SexyAppBase for theType)
 	virtual void			HandleGameAlreadyRunning(); 
 
@@ -543,10 +543,10 @@ public:
 
 	std::vector<std::string>	GetStringVector(std::string_view theId);
 
-	void					SetBoolean(const std::string& theId, bool theValue);
-	void					SetInteger(const std::string& theId, int theValue);
-	void					SetDouble(const std::string& theId, double theValue);
-	void					SetString(const std::string& theId, const std::string& theValue);
+	void					SetBoolean(std::string_view theId, bool theValue);
+	void					SetInteger(std::string_view theId, int theValue);
+	void					SetDouble(std::string_view theId, double theValue);
+	void					SetString(std::string_view theId, std::string_view theValue);
 	
 	// Demo access methods
 	bool					PrepareDemoCommand(bool required);

@@ -35,7 +35,7 @@ PropertiesParser::PropertiesParser(SexyAppBase* theApp)
 	mXMLParser = nullptr;
 }
 
-void PropertiesParser::Fail(const std::string& theErrorText)
+void PropertiesParser::Fail(std::string_view theErrorText)
 {
 	if (!mHasFailed)
 	{
@@ -290,7 +290,7 @@ bool PropertiesParser::ParsePropertiesFile(const std::string& theFilename)
 	return DoParseProperties();	
 }
 
-std::string PropertiesParser::GetErrorText()
+const std::string& PropertiesParser::GetErrorText()
 {
 	return mError;
 }

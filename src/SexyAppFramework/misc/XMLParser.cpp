@@ -86,7 +86,7 @@ void XMLParser::SetEncodingType(XMLEncodingType theEncoding)
 	}
 }
 
-void XMLParser::Fail(const std::string& theErrorText)
+void XMLParser::Fail(std::string_view theErrorText)
 {
 	mHasFailed = true;
 	mErrorText = theErrorText;
@@ -102,7 +102,7 @@ void XMLParser::Init()
 	mByteSwap = false;
 }
 
-bool XMLParser::AddAttribute(XMLElement* theElement, const std::string& theAttributeKey, const std::string& theAttributeValue)
+bool XMLParser::AddAttribute(XMLElement* theElement, std::string_view theAttributeKey, std::string_view theAttributeValue)
 {
 	std::pair<XMLParamMap::iterator,bool> aRet;
 
@@ -722,7 +722,7 @@ bool XMLParser::HasFailed()
 	return mHasFailed;
 }
 
-std::string XMLParser::GetErrorText()
+const std::string& XMLParser::GetErrorText() const
 {
 	return mErrorText;
 }
@@ -732,7 +732,7 @@ int XMLParser::GetCurrentLineNum()
 	return mLineNum;
 }
 
-std::string XMLParser::GetFileName()
+const std::string& XMLParser::GetFileName() const
 {
 	return mFileName;
 }

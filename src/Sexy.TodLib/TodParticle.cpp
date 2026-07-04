@@ -147,9 +147,8 @@ bool TodParticleLoadADef(TodParticleDefinition* theParticleDef, const char* theP
 	TodHesitationBracket("Load Particle %s", theParticleFileName);
 	if (!DefinitionLoadXML(theParticleFileName, &gParticleDefMap, theParticleDef))
 	{
-		char aBuf[512];
-		snprintf(aBuf, sizeof(aBuf), "Failed to load particle '%s'", theParticleFileName);
-		TodErrorMessageBox(aBuf, "Error");
+		std::string aBuf = Sexy::StrFormat("Failed to load particle '%s'", theParticleFileName);
+		TodErrorMessageBox(aBuf.c_str(), "Error");
 		return false;
 	}
 	else
@@ -218,9 +217,8 @@ void TodParticleLoadDefinitions(const ParticleParams* theParticleParamArray, int
 		TOD_ASSERT(aParticleParams.mParticleEffect == i);
 		if (!TodParticleLoadADef(&gParticleDefArray[i], aParticleParams.mParticleFileName))
 		{
-			char aBuf[512];
-			snprintf(aBuf, sizeof(aBuf), "Failed to load particle '%s'", aParticleParams.mParticleFileName);
-			TodErrorMessageBox(aBuf, "Error");
+			std::string aBuf = Sexy::StrFormat("Failed to load particle '%s'", aParticleParams.mParticleFileName);
+			TodErrorMessageBox(aBuf.c_str(), "Error");
 		}
 		gSexyAppBase->mCompletedLoadingThreadTasks += 6;
 	}
@@ -610,12 +608,12 @@ void TodParticleEmitter::UpdateSystemField(ParticleField* theParticleField, floa
 	}
 }
 
-bool TodParticleEmitter::CrossFadeParticleToName(TodParticle* theParticle, const char* theEmitterName)
+bool TodParticleEmitter::CrossFadeParticleToName(TodParticle* theParticle, 	std::string_view theEmitterName)
 {
 	TodEmitterDefinition* aDef = mParticleSystem->FindEmitterDefByName(theEmitterName);
 	if (aDef == nullptr)
 	{
-		TodTrace("Can't find emitter to cross fade: %s\n", theEmitterName);
+		TodTrace("Can't find emitter to cross fade: %.*s\n", (int)theEmitterName.size(), theEmitterName.data());
 		return false;
 	}
 	if (mParticleSystem->mParticleHolder->mEmitters.mSize == mParticleSystem->mParticleHolder->mEmitters.mMaxSize)
@@ -1104,74 +1102,74 @@ void TodParticleEmitter::SystemMove(float theX, float theY)
 	}
 }
 
-void TodParticleSystem::OverrideColor(const char* theEmitterName, const Color& theColor)
+void TodParticleSystem::OverrideColor(	std::string_view theEmitterName, const Color& theColor)
 {
 	for (TodListNode<ParticleEmitterID>* aNode = mEmitterList.mHead; aNode != nullptr; aNode = aNode->mNext)
 	{
 		TodParticleEmitter* aEmitter = mParticleHolder->mEmitters.DataArrayGet(static_cast<unsigned int>(aNode->mValue));
-		if (theEmitterName == nullptr || strcasecmp(theEmitterName, aEmitter->mEmitterDef->mName) == 0)
+		if (theEmitterName.empty() || Sexy::StringEqualsNoCase(theEmitterName, aEmitter->mEmitterDef->mName))
 			aEmitter->mColorOverride = theColor;
 	}
 }
 
-void TodParticleSystem::OverrideExtraAdditiveDraw(const char* theEmitterName, bool theEnableExtraAdditiveDraw)
+void TodParticleSystem::OverrideExtraAdditiveDraw(	std::string_view theEmitterName, bool theEnableExtraAdditiveDraw)
 {
 	for (TodListNode<ParticleEmitterID>* aNode = mEmitterList.mHead; aNode != nullptr; aNode = aNode->mNext)
 	{
 		TodParticleEmitter* aEmitter = mParticleHolder->mEmitters.DataArrayGet(static_cast<unsigned int>(aNode->mValue));
-		if (theEmitterName == nullptr || strcasecmp(theEmitterName, aEmitter->mEmitterDef->mName) == 0)
+		if (theEmitterName.empty() || Sexy::StringEqualsNoCase(theEmitterName, aEmitter->mEmitterDef->mName))
 			aEmitter->mExtraAdditiveDrawOverride = theEnableExtraAdditiveDraw;
 	}
 }
 
 // GOTY @Patoke: 0x522CB0
-void TodParticleSystem::OverrideImage(const char* theEmitterName, Image* theImage)
+void TodParticleSystem::OverrideImage(	std::string_view theEmitterName, Image* theImage)
 {
 	for (TodListNode<ParticleEmitterID>* aNode = mEmitterList.mHead; aNode != nullptr; aNode = aNode->mNext)
 	{
 		TodParticleEmitter* aEmitter = mParticleHolder->mEmitters.DataArrayGet(static_cast<unsigned int>(aNode->mValue));
-		if (theEmitterName == nullptr || strcasecmp(theEmitterName, aEmitter->mEmitterDef->mName) == 0)
+		if (theEmitterName.empty() || Sexy::StringEqualsNoCase(theEmitterName, aEmitter->mEmitterDef->mName))
 			aEmitter->mImageOverride = theImage;
 	}
 }
 
-void TodParticleSystem::OverrideFrame(const char* theEmitterName, int theFrame)
+void TodParticleSystem::OverrideFrame(	std::string_view theEmitterName, int theFrame)
 {
 	for (TodListNode<ParticleEmitterID>* aNode = mEmitterList.mHead; aNode != nullptr; aNode = aNode->mNext)
 	{
 		TodParticleEmitter* aEmitter = mParticleHolder->mEmitters.DataArrayGet(static_cast<unsigned int>(aNode->mValue));
-		if (theEmitterName == nullptr || strcasecmp(theEmitterName, aEmitter->mEmitterDef->mName) == 0)
+		if (theEmitterName.empty() || Sexy::StringEqualsNoCase(theEmitterName, aEmitter->mEmitterDef->mName))
 			aEmitter->mFrameOverride = theFrame;
 	}
 }
 
-void TodParticleSystem::OverrideScale(const char* theEmitterName, float theScale)
+void TodParticleSystem::OverrideScale(	std::string_view theEmitterName, float theScale)
 {
 	for (TodListNode<ParticleEmitterID>* aNode = mEmitterList.mHead; aNode != nullptr; aNode = aNode->mNext)
 	{
 		TodParticleEmitter* aEmitter = mParticleHolder->mEmitters.DataArrayGet(static_cast<unsigned int>(aNode->mValue));
-		if (theEmitterName == nullptr || strcasecmp(theEmitterName, aEmitter->mEmitterDef->mName) == 0)
+		if (theEmitterName.empty() || Sexy::StringEqualsNoCase(theEmitterName, aEmitter->mEmitterDef->mName))
 			aEmitter->mScaleOverride = theScale;
 	}
 }
 
-TodParticleEmitter* TodParticleSystem::FindEmitterByName(const char* theEmitterName)
+TodParticleEmitter* TodParticleSystem::FindEmitterByName(	std::string_view theEmitterName)
 {
 	for (TodListNode<ParticleEmitterID>* aNode = mEmitterList.mHead; aNode != nullptr; aNode = aNode->mNext)
 	{
 		TodParticleEmitter* aEmitter = mParticleHolder->mEmitters.DataArrayGet(static_cast<unsigned int>(aNode->mValue));
-		if (strcasecmp(theEmitterName, aEmitter->mEmitterDef->mName) == 0)
+		if (Sexy::StringEqualsNoCase(theEmitterName, aEmitter->mEmitterDef->mName))
 			return aEmitter;
 	}
 	return nullptr;
 }
 
-TodEmitterDefinition* TodParticleSystem::FindEmitterDefByName(const char* theEmitterName)
+TodEmitterDefinition* TodParticleSystem::FindEmitterDefByName(	std::string_view theEmitterName)
 {
 	for (int i = 0; i < mParticleDef->mEmitterDefCount; i++)
 	{
 		TodEmitterDefinition* aEmitterDef = &mParticleDef->mEmitterDefs[i];
-		if (strcasecmp(theEmitterName, aEmitterDef->mName) == 0)
+		if (Sexy::StringEqualsNoCase(theEmitterName, aEmitterDef->mName))
 			return aEmitterDef;
 	}
 	return nullptr;
@@ -1202,17 +1200,17 @@ void TodParticleEmitter::CrossFadeEmitter(TodParticleEmitter* theToEmitter)
 		CrossFadeParticle(mParticleSystem->mParticleHolder->mParticles.DataArrayGet(static_cast<unsigned int>(aNode->mValue)), theToEmitter);
 }
 
-void TodParticleSystem::CrossFade(const char* theEmitterName)
+void TodParticleSystem::CrossFade(	std::string_view theEmitterName)
 {
 	TodEmitterDefinition* aEmitterDef = FindEmitterDefByName(theEmitterName);
 	if (aEmitterDef == nullptr)
 	{
-		TodTrace("Can't find cross fade emitter: %s\n", theEmitterName);
+		TodTrace("Can't find cross fade emitter: %.*s\n", (int)theEmitterName.size(), theEmitterName.data());
 		return;
 	}
 	if (!FloatTrackIsSet(aEmitterDef->mCrossFadeDuration))
 	{
-		TodTrace("Can't cross fade without duration set: %s\n", theEmitterName);
+		TodTrace("Can't cross fade without duration set: %.*s\n", (int)theEmitterName.size(), theEmitterName.data());
 		return;
 	}
 	if (mParticleHolder->mEmitters.mSize + mEmitterList.mSize > mParticleHolder->mEmitters.mMaxSize)

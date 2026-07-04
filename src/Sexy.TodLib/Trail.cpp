@@ -79,9 +79,8 @@ void TrailLoadDefinitions(TrailParams* theTrailParamArray, int theTrailParamArra
 		TOD_ASSERT(aTrailParams->mTrailType == static_cast<TrailType>(i));
 		if (!TrailLoadADef(&gTrailDefArray[i], aTrailParams->mTrailFileName))
 		{
-			char aBuf[512];
-			snprintf(aBuf, sizeof(aBuf), "Failed to load trail '%s'", aTrailParams->mTrailFileName);
-			TodErrorMessageBox(aBuf, "Error");
+			std::string aBuf = Sexy::StrFormat("Failed to load trail '%s'", aTrailParams->mTrailFileName);
+			TodErrorMessageBox(aBuf.c_str(), "Error");
 		}
 	}
 }

@@ -79,13 +79,17 @@ void MessageWidget::SetLabel(std::string_view theNewLabel, MessageStyle theMessa
 	if (mReanimType != ReanimationType::REANIM_NONE && mDuration > 0)
 	{
 		mMessageStyleNext = theMessageStyle;
-		strcpy(mLabelNext, aLabel.c_str());
+		const size_t aLen = aLabel.length();
+		memcpy(mLabelNext, aLabel.data(), aLen);
+		mLabelNext[aLen] = '\0';
 		ClearLabel();
 	}
 	else
 	{
 		ClearReanim();
-		strcpy(mLabel, aLabel.c_str());
+		const size_t aLen = aLabel.length();
+		memcpy(mLabel, aLabel.data(), aLen);
+		mLabel[aLen] = '\0';
 		mMessageStyle = theMessageStyle;
 		mReanimType = ReanimationType::REANIM_NONE;
 

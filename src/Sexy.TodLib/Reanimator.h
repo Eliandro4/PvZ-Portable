@@ -23,6 +23,7 @@
 #define __REANIMATION_H__
 
 #include <cstdint>
+#include <string_view>
 #include "DataArray.h"
 #include "FilterEffect.h"
 #include "misc/SexyMatrix.h"
@@ -241,40 +242,40 @@ public:
     void                            GetCurrentTransform(int theTrackIndex, ReanimatorTransform* theTransformCurrent);
     void                            GetTransformAtTime(int theTrackIndex, ReanimatorTransform* theTransform, ReanimatorFrameTime* theFrameTime);
     void                            GetFrameTime(ReanimatorFrameTime* theFrameTime);
-    int                             FindTrackIndex(const char* theTrackName);
-    void                            AttachToAnotherReanimation(Reanimation* theAttachReanim, const char* theTrackName);
+    int                             FindTrackIndex(std::string_view theTrackName);
+    void                            AttachToAnotherReanimation(Reanimation* theAttachReanim, std::string_view theTrackName);
     void                            GetAttachmentOverlayMatrix(int theTrackIndex, SexyTransform2D& theOverlayMatrix);
-    /*inline*/ void                 SetFramesForLayer(const char* theTrackName);
+    /*inline*/ void                 SetFramesForLayer(std::string_view theTrackName);
     static void                     MatrixFromTransform(const ReanimatorTransform& theTransform, SexyMatrix3& theMatrix);
-    bool                            TrackExists(const char* theTrackName);
+    bool                            TrackExists(std::string_view theTrackName);
     void                            StartBlend(int theBlendTime);
-    /*inline*/ void                 SetShakeOverride(const char* theTrackName, float theShakeAmount);
+    /*inline*/ void                 SetShakeOverride(std::string_view theTrackName, float theShakeAmount);
     /*inline*/ void                 SetPosition(float theX, float theY);
     /*inline*/ void                 OverrideScale(float theScaleX, float theScaleY);
-    float                           GetTrackVelocity(const char* theTrackName);
-    /*inline*/ void                 SetImageOverride(const char* theTrackName, Image* theImage);
-    /*inline*/ Image*               GetImageOverride(const char* theTrackName);
-    void                            ShowOnlyTrack(const char* theTrackName);
+    float                           GetTrackVelocity(std::string_view theTrackName);
+    /*inline*/ void                 SetImageOverride(std::string_view theTrackName, Image* theImage);
+    /*inline*/ Image*               GetImageOverride(std::string_view theTrackName);
+    void                            ShowOnlyTrack(std::string_view theTrackName);
     void                            GetTrackMatrix(int theTrackIndex, SexyTransform2D& theMatrix);
-    void                            AssignRenderGroupToTrack(const char* theTrackName, int theRenderGroup);
-    void                            AssignRenderGroupToPrefix(const char* theTrackName, int theRenderGroup);
+    void                            AssignRenderGroupToTrack(std::string_view theTrackName, int theRenderGroup);
+    void                            AssignRenderGroupToPrefix(std::string_view theTrackName, int theRenderGroup);
     void                            PropogateColorToAttachments();
     bool                            ShouldTriggerTimedEvent(float theEventTime);
 //  void                            TodTriangleGroupDraw(Graphics* g, TodTriangleGroup* theTriangleGroup) { ; }
-    Image*                          GetCurrentTrackImage(const char* theTrackName);
-    AttachEffect*                   AttachParticleToTrack(const char* theTrackName, TodParticleSystem* theParticleSystem, float thePosX, float thePosY);
+    Image*                          GetCurrentTrackImage(std::string_view theTrackName);
+    AttachEffect*                   AttachParticleToTrack(std::string_view theTrackName, TodParticleSystem* theParticleSystem, float thePosX, float thePosY);
     void                            GetTrackBasePoseMatrix(int theTrackIndex, SexyTransform2D& theBasePosMatrix);
-    bool                            IsTrackShowing(const char* theTrackName);
+    bool                            IsTrackShowing(std::string_view theTrackName);
     /*inline*/ void                 SetTruncateDisappearingFrames(const char* theTrackName = nullptr, bool theTruncateDisappearingFrames = false);
-    /*inline*/ void                 PlayReanim(const char* theTrackName, ReanimLoopType theLoopType, int theBlendTime, float theAnimRate);
+    /*inline*/ void                 PlayReanim(std::string_view theTrackName, ReanimLoopType theLoopType, int theBlendTime, float theAnimRate);
     void                            ReanimationDelete();
-    ReanimatorTrackInstance*        GetTrackInstanceByName(const char* theTrackName);
-    void                            GetFramesForLayer(const char* theTrackName, int& theFrameStart, int& theFrameCount);
+    ReanimatorTrackInstance*        GetTrackInstanceByName(std::string_view theTrackName);
+    void                            GetFramesForLayer(std::string_view theTrackName, int& theFrameStart, int& theFrameCount);
     void                            UpdateAttacherTrack(int theTrackIndex);
     static void                     ParseAttacherTrack(const ReanimatorTransform& theTransform, AttacherInfo& theAttacherInfo);
     void                            AttacherSynchWalkSpeed(int theTrackIndex, Reanimation* theAttachReanim, AttacherInfo& theAttacherInfo);
-    /*inline*/ bool                 IsAnimPlaying(const char* theTrackName);
-    void                            SetBasePoseFromAnim(const char* theTrackName);
+    /*inline*/ bool                 IsAnimPlaying(std::string_view theTrackName);
+    void                            SetBasePoseFromAnim(std::string_view theTrackName);
     void                            ReanimBltMatrix(Graphics* g, Image* theImage, SexyMatrix3& theTransform, const Rect& theClipRect, const Color& theColor, int theDrawMode, const Rect& theSrcRect);
     Reanimation*                    FindSubReanim(ReanimationType theReanimType);
 };

@@ -203,7 +203,7 @@ Color TextWidget::GetLastColor(std::string_view theString)
 }
 
 //UNICODE
-void TextWidget::AddToPhysicalLines(int theIdx, const std::string& theLine)
+void TextWidget::AddToPhysicalLines(int theIdx, std::string_view theLine)
 {		
 	std::string aCurString = "";
 		
@@ -224,14 +224,15 @@ void TextWidget::AddToPhysicalLines(int theIdx, const std::string& theLine)
 			if (aSpacePos == -1)
 				aSpacePos = theLine.length();
 			
-			std::string aNewString = aCurString + theLine.substr(aCurPos, aSpacePos - aCurPos);
+			std::string aNewString = aCurString;
+			aNewString += theLine.substr(aCurPos, aSpacePos - aCurPos);
 			if (GetColorStringWidth(aNewString) > mWidth-8)
 			{
-				mPhysicalLines.push_back(aCurString);					
+				mPhysicalLines.push_back(aCurString);
 				mLineMap.push_back(theIdx);
 				Color aColor = GetLastColor(aCurString);
-				aCurString = "  " [char(0xFF) + (char) aColor.mRed + (char) aColor.mGreen + (char) aColor.mBlue] +
-					theLine.substr(aNextCheckPos, aSpacePos - aNextCheckPos);
+				aCurString = std::string(1, "  " [char(0xFF) + (char) aColor.mRed + (char) aColor.mGreen + (char) aColor.mBlue]);
+				aCurString += theLine.substr(aNextCheckPos, aSpacePos - aNextCheckPos);
 			}
 			else
 				aCurString = aNewString;
@@ -248,9 +249,9 @@ void TextWidget::AddToPhysicalLines(int theIdx, const std::string& theLine)
 }
 
 //UNICODE
-void TextWidget::AddLine(const std::string& theLine)
+void TextWidget::AddLine(std::string_view theLine)
 {
-	std::string aLine = theLine;
+	std::string aLine(theLine);
 
 	if (aLine.compare("") == 0)
 		aLine = " ";

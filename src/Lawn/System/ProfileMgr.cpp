@@ -127,7 +127,7 @@ void ProfileMgr::DeleteProfile(ProfileMap::iterator theProfile)
     mProfileMap.erase(theProfile);
 }
 
-bool ProfileMgr::DeleteProfile(const std::string& theName)
+bool ProfileMgr::DeleteProfile(std::string_view theName)
 {
     auto anItr = mProfileMap.find(theName);
     if (anItr == mProfileMap.end())
@@ -145,7 +145,7 @@ bool ProfileMgr::RenameProfile(const std::string& theOldName, const std::string&
     else
     {
         // 判断修改前后的用户名是否一致，一致则直接在原存档中进行修改，否则需要额外操作
-        if (strcasecmp(theOldName.c_str(), theNewName.c_str()) == 0)
+        if (Sexy::StringEqualsNoCase(theOldName, theNewName))
             anOldItr->second.mName = theNewName;
         else
         {
@@ -181,7 +181,7 @@ void ProfileMgr::DeleteOldestProfile()
 }
 
 // GOTY @Patoke: 0x46F7C0
-PlayerInfo* ProfileMgr::GetProfile(const std::string& theName)
+PlayerInfo* ProfileMgr::GetProfile(std::string_view theName)
 {
     auto anItr = mProfileMap.find(theName);
     if (anItr != mProfileMap.end())

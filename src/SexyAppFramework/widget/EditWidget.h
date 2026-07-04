@@ -26,6 +26,7 @@
 #define __EDITWIDGET_H__
 
 #include "Widget.h"
+#include <string_view>
 
 namespace Sexy
 {
@@ -86,7 +87,7 @@ protected:
 
 public:
 	virtual void			SetFont(_Font* theFont, _Font* theWidthCheckFont = nullptr);
-	virtual void			SetText(const std::string& theText, bool leftPosToZero = true);
+	virtual void			SetText(std::string_view theText, bool leftPosToZero = true);
 	virtual bool			IsPartOfWord(char theChar);
 	virtual int				GetCharAt(int x, int y);
 

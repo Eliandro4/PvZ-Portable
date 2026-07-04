@@ -27,6 +27,8 @@
 
 #include <string>
 #include <cstring>
+#include <cctype>
+#include <algorithm>
 #include <vector>
 #include <map>
 #include <cstdlib>
@@ -114,8 +116,8 @@ typedef unsigned int uint;
 typedef unsigned long ulong;
 typedef int64_t int64;
 
-typedef std::map<std::string, std::string> DefinesMap;
-typedef std::vector<char> CharVector;
+using DefinesMap = std::map<std::string, std::string, std::less<>>;
+using CharVector = std::vector<char>;
 
 namespace Sexy
 {
@@ -143,10 +145,8 @@ std::string			StringToLower(std::string_view theString);
 std::string			Upper(std::string_view theData);
 std::string			Lower(std::string_view theData);
 std::string			Trim(std::string_view theString);
-bool				StringToInt(const std::string& theString, int* theIntVal);
-bool				StringToDouble(const std::string& theString, double* theDoubleVal);
-int					StrFindNoCase(const char *theStr, const char *theFind);
-bool				StrPrefixNoCase(const char *theStr, const char *thePrefix, int maxLength = 10000000);
+bool				StringToInt(std::string_view theString, int* theIntVal);
+bool				StringToDouble(std::string_view theString, double* theDoubleVal);
 std::string			CommaSeperate(int theValue);
 std::string			Evaluate(std::string_view theString, const DefinesMap& theDefinesMap);
 std::string			XMLDecodeString(std::string_view theString);
@@ -388,7 +388,23 @@ inline constexpr uint32_t ToBE32(uint32_t v) noexcept { return EndianConvert<uin
 inline constexpr uint64_t FromBE64(uint64_t v) noexcept { return EndianConvert<uint64_t, std::endian::big>(v); }
 inline constexpr uint64_t ToBE64(uint64_t v) noexcept { return EndianConvert<uint64_t, std::endian::big>(v); }
 
-struct StringLessNoCase { bool operator()(const std::string &s1, const std::string &s2) const { return strcasecmp(s1.c_str(),s2.c_str())<0; } };
+// Case-insensitive ASCII comparison helpers (locale-independent, no NUL-termination required).
+inline bool StringEqualsNoCase(std::string_view a, std::string_view b) noexcept
+{
+	return a.size() == b.size() &&
+		std::equal(a.begin(), a.end(), b.begin(),
+			[](unsigned char x, unsigned char y) { return std::tolower(x) == std::tolower(y); });
+}
+
+struct StringLessNoCase
+{
+	using is_transparent = void;
+	bool operator()(std::string_view a, std::string_view b) const
+	{
+		return std::lexicographical_compare(a.begin(), a.end(), b.begin(), b.end(),
+			[](unsigned char x, unsigned char y) { return std::tolower(x) < std::tolower(y); });
+	}
+};
 
 }
 

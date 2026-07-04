@@ -112,7 +112,7 @@ void Tod_SWTri_AddAllDrawTriFuncs()
 	SWTri_AddDrawTriFunc(true, true, true, true, 0x0555, true, TodDrawTriangle_0555_TEX1_TALPHA1_MOD1_GLOB1_BLEND1);
 }
 
-std::string TodGetCurrentLevelName()
+std::string_view TodGetCurrentLevelName()
 {
 	return "Unknown level";
 }
@@ -1252,27 +1252,27 @@ void FreeGlobalAllocators()
 	gNumGlobalAllocators = 0;
 }
 
-std::string TodReplaceString(std::string_view theText, const char* theStringToFind, std::string_view theStringToSubstitute)
+std::string TodReplaceString(std::string_view theText, std::string_view theStringToFind, std::string_view theStringToSubstitute)
 {
 	std::string aFinalString = TodStringTranslate(theText);
 	size_t aPos = aFinalString.find(theStringToFind);
 	if (aPos != std::string::npos)
 	{
 		std::string aFinalStringToSubstitute = TodStringTranslate(theStringToSubstitute);
-		aFinalString.replace(aPos, strlen(theStringToFind), aFinalStringToSubstitute);
+		aFinalString.replace(aPos, theStringToFind.size(), aFinalStringToSubstitute);
 	}
 
 	return aFinalString;
 }
 
-std::string TodReplaceNumberString(std::string_view theText, const char* theStringToFind, int theNumber)
+std::string TodReplaceNumberString(std::string_view theText, std::string_view theStringToFind, int theNumber)
 {
 	std::string aFinalString = TodStringTranslate(theText);
 	size_t aPos = aFinalString.find(theStringToFind);
 	if (aPos != std::string::npos)
 	{
 		std::string aNumberString = StrFormat("%d", theNumber);
-		aFinalString.replace(aPos, strlen(theStringToFind), aNumberString);
+		aFinalString.replace(aPos, theStringToFind.size(), aNumberString);
 	}
 
 	return aFinalString;

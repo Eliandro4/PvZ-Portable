@@ -74,7 +74,7 @@ public:
 	bool					mVerticalCenterText;
 
 public:
-	LawnDialog(LawnApp* theApp, int theId, bool isModal, const std::string& theDialogHeader, const std::string& theDialogLines, const std::string& theDialogFooter, int theButtonMode);
+	LawnDialog(LawnApp* theApp, int theId, bool isModal, std::string_view theDialogHeader, std::string_view theDialogLines, std::string_view theDialogFooter, int theButtonMode);
 	~LawnDialog() override;
 
 	int						GetLeft();
@@ -99,7 +99,7 @@ public:
 	DialogButton*			mMenuButton;
 
 public:
-	GameOverDialog(const std::string& theMessage, bool theShowChallengeName);
+	GameOverDialog(std::string_view theMessage, bool theShowChallengeName);
 	~GameOverDialog() override;
 
 	void					KeyDown(KeyCode theKey) override;
