@@ -223,6 +223,12 @@ public:
 	bool							mDanceMode;
 	bool							mDaisyMode;
 	bool							mSukhbirMode;
+
+	// Gamepad input state (driven by the desktop SDL gamepad backend in SexyAppFramework)
+	int32_t							mGamepadGridX;
+	int32_t							mGamepadGridY;
+	bool							mGamepadGridActive;
+	int32_t							mGamepadSelectedPacket;
 	BoardResult						mPrevBoardResult;
 	int32_t							mTriggeredLawnMowers;
 	uint32_t						mPlayTimeActiveLevel;

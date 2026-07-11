@@ -85,6 +85,10 @@ Board::Board(LawnApp* theApp)
 	mLevel = 0;
 	mCursorObject = new CursorObject();
 	mCursorPreview = new CursorPreview();
+	mGamepadGridX = 0;
+	mGamepadGridY = 0;
+	mGamepadGridActive = false;
+	mGamepadSelectedPacket = -1;
 	mSeedBank = new SeedBank();
 	mCutScene = new CutScene();
 	mSpecialGraveStoneX = -1;
@@ -4378,6 +4382,8 @@ void Board::PickUpTool(GameObjectType theObjectType)
 	switch (theObjectType)
 	{
 	case GameObjectType::OBJECT_TYPE_SHOVEL:
+		if (!mShowShovel)
+			return;
 		if (mTutorialState == TutorialState::TUTORIAL_SHOVEL_PICKUP)
 		{
 			SetTutorialState(TutorialState::TUTORIAL_SHOVEL_DIG);
@@ -7640,6 +7646,15 @@ void Board::Draw(Graphics* g)
 
 	mDrawCount++;
 	DrawGameObjects(g);
+
+	if (mGamepadGridActive)
+	{
+		int aX = GridToPixelX(mGamepadGridX, mGamepadGridY);
+		int aY = GridToPixelY(mGamepadGridX, mGamepadGridY);
+		int aCellH = (StageHasPool() || StageHasRoof()) ? 85 : 100;
+		g->SetColor(Color(255, 255, 0, 200));
+		g->DrawRect(aX, aY, 80, aCellH);
+	}
 }
 
 // GOTY @Patoke: 0x41D910

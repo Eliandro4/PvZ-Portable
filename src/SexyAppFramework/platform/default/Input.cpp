@@ -30,6 +30,308 @@
 #include "widget/WidgetManager.h"
 #include "misc/KeyCodes.h"
 
+// Game-specific headers (the desktop port links SexyAppFramework together with the
+// Lawn game code in a single binary, so the gamepad backend can drive the Board).
+#include "LawnApp.h"
+#include "Lawn/Board.h"
+#include "Lawn/CursorObject.h"
+#include "Lawn/SeedPacket.h"
+
+using namespace Sexy;
+
+namespace
+{
+	constexpr int GAMEPAD_DEADZONE = 8000;
+	constexpr int GAMEPAD_REPEAT_MS = 180;
+	constexpr float GAMEPAD_MENU_SPEED = 700.0f; // pixels per second
+
+	static SDL_GameController* gGamepad = nullptr;
+
+	// Virtual mouse cursor (widget coordinates) used in MENU / non-battle modes.
+	static float gPadCursorX = 400.0f;
+	static float gPadCursorY = 300.0f;
+
+	// Current highlighted grid cell (battle mode).
+	static int gPadGridX = 0;
+	static int gPadGridY = 0;
+
+	// Currently selected seed-bank packet index (battle mode), or -1 if none.
+	static int gPadSelected = -1;
+
+	// Edge-detection state for buttons.
+	static bool gPadPrevA = false;
+	static bool gPadPrevB = false;
+	static bool gPadPrevStart = false;
+
+	// Repeat timers (ms).
+	static Uint32 gPadGridCD = 0;
+	static Uint32 gPadSelCD = 0;
+	static Uint32 gPadLastTick = 0;
+	static bool gPadWasBattle = false;
+
+	static inline int PadClamp(int v, int lo, int hi) { return v < lo ? lo : (v > hi ? hi : v); }
+
+	static void GamepadLoadMappings()
+	{
+		// Load community controller mappings from the SDL_GameControllerDB
+		// (https://github.com/mdqinc/SDL_GameControllerDB/blob/master/gamecontrollerdb.txt).
+		// Drop a `gamecontrollerdb.txt` next to the executable (or in the working directory)
+		// to get correct button/axis mappings for a wider range of gamepads.
+		char* basePath = SDL_GetBasePath();
+		if (basePath)
+		{
+			std::string path = std::string(basePath) + "gamecontrollerdb.txt";
+			SDL_GameControllerAddMappingsFromFile(path.c_str());
+			SDL_free(basePath);
+		}
+		SDL_GameControllerAddMappingsFromFile("gamecontrollerdb.txt");
+	}
+
+	static void GamepadTryOpen()
+	{
+		if (gGamepad)
+			return;
+		for (int i = 0; i < SDL_NumJoysticks(); i++)
+		{
+			if (SDL_IsGameController(i))
+			{
+				gGamepad = SDL_GameControllerOpen(i);
+				if (gGamepad)
+					break;
+			}
+		}
+	}
+
+	static int FirstValidPacket(Board* board)
+	{
+		SeedBank* sb = board->mSeedBank;
+		for (int i = 0; i < sb->mNumPackets; i++)
+		{
+			if (sb->mSeedPackets[i].mPacketType != SeedType::SEED_NONE)
+				return i;
+		}
+		return -1;
+	}
+
+	static int NextValidPacket(Board* board, int start, int dir)
+	{
+		SeedBank* sb = board->mSeedBank;
+		int n = sb->mNumPackets;
+		if (n <= 0)
+			return -1;
+		int i = start;
+		for (int step = 0; step < n; step++)
+		{
+			i = PadClamp(i + dir, 0, n - 1);
+			if (sb->mSeedPackets[i].mPacketType != SeedType::SEED_NONE)
+				return i;
+		}
+		return start;
+	}
+
+	static void CellCenter(Board* board, int gx, int gy, int& cx, int& cy)
+	{
+		int cellH = (board->StageHasPool() || board->StageHasRoof()) ? 85 : 100;
+		cx = board->GridToPixelX(gx, gy) + 40;
+		cy = board->GridToPixelY(gx, gy) + cellH / 2;
+	}
+
+	static void AutoCollectSun(Board* board)
+	{
+		Coin* coin = nullptr;
+		while (board->mCoins.IterateNext(coin))
+		{
+			if (!coin->mDead && !coin->mIsBeingCollected && (coin->IsSun() || coin->IsMoney()))
+				coin->MouseDown((int)coin->mPosX, (int)coin->mPosY, 1);
+		}
+	}
+
+	static void GamepadPlant(LawnApp* app, Board* board)
+	{
+		int sel = gPadSelected;
+		if (sel < 0 || sel >= board->mSeedBank->mNumPackets)
+			return;
+		SeedPacket* pkt = &board->mSeedBank->mSeedPackets[sel];
+		if (!pkt->CanPickUp())
+			return;
+
+		board->mCursorObject->mType = pkt->mPacketType;
+		board->mCursorObject->mImitaterType = pkt->mImitaterType;
+		board->mCursorObject->mCursorType = CursorType::CURSOR_TYPE_PLANT_FROM_BANK;
+		board->mCursorObject->mSeedBankIndex = sel;
+
+		int cx = 0, cy = 0;
+		CellCenter(board, gPadGridX, gPadGridY, cx, cy);
+		app->mWidgetManager->MouseMove(cx, cy);
+		app->mWidgetManager->MouseDown(cx, cy, 1);
+		app->mWidgetManager->MouseUp(cx, cy, 1);
+	}
+
+	static void GamepadShovel(LawnApp* app, Board* board)
+	{
+		if (!board->mShowShovel || !board->CanInteractWithBoardButtons())
+			return;
+		board->PickUpTool(GameObjectType::OBJECT_TYPE_SHOVEL);
+		int cx = 0, cy = 0;
+		CellCenter(board, gPadGridX, gPadGridY, cx, cy);
+		app->mWidgetManager->MouseMove(cx, cy);
+		app->mWidgetManager->MouseDown(cx, cy, 1);
+		app->mWidgetManager->MouseUp(cx, cy, 1);
+		board->mCursorObject->mCursorType = CursorType::CURSOR_TYPE_NORMAL;
+	}
+
+	static void GamepadUpdate()
+	{
+		if (!gGamepad)
+			return;
+
+		LawnApp* app = gLawnApp;
+		if (!app || !app->mWidgetManager)
+			return;
+
+		WidgetManager* wm = app->mWidgetManager;
+		Uint32 now = SDL_GetTicks();
+		Uint32 dt = gPadLastTick ? (now - gPadLastTick) : 16;
+		gPadLastTick = now;
+
+		Board* board = app->mBoard;
+		bool battle = board != nullptr
+			&& app->mGameScene == GameScenes::SCENE_PLAYING
+			&& !app->mSeedChooserScreen
+			&& app->GetDialogCount() == 0
+			&& !board->mPaused
+			&& board->mBoardFadeOutCounter < 0;
+
+		if (battle && !gPadWasBattle)
+		{
+			gPadGridX = 0;
+			gPadGridY = 0;
+			gPadSelected = -1;
+			board->mGamepadSelectedPacket = gPadSelected;
+		}
+		else if (!battle && gPadWasBattle && board)
+		{
+			board->mGamepadGridActive = false;
+			board->mGamepadSelectedPacket = -1;
+		}
+		gPadWasBattle = battle;
+
+		Sint16 lx = SDL_GameControllerGetAxis(gGamepad, SDL_CONTROLLER_AXIS_LEFTX);
+		Sint16 ly = SDL_GameControllerGetAxis(gGamepad, SDL_CONTROLLER_AXIS_LEFTY);
+		Sint16 rx = SDL_GameControllerGetAxis(gGamepad, SDL_CONTROLLER_AXIS_RIGHTX);
+		Sint16 ry = SDL_GameControllerGetAxis(gGamepad, SDL_CONTROLLER_AXIS_RIGHTY);
+
+		bool a = SDL_GameControllerGetButton(gGamepad, SDL_CONTROLLER_BUTTON_A) != 0;
+		bool b = SDL_GameControllerGetButton(gGamepad, SDL_CONTROLLER_BUTTON_B) != 0;
+		bool start = SDL_GameControllerGetButton(gGamepad, SDL_CONTROLLER_BUTTON_START) != 0;
+
+		if (battle)
+		{
+			board->mGamepadGridActive = true;
+			board->mGamepadGridX = gPadGridX;
+			board->mGamepadGridY = gPadGridY;
+			board->mGamepadSelectedPacket = gPadSelected;
+
+			// Left stick: grid navigation (discrete, with auto-repeat).
+			if (std::abs(lx) > GAMEPAD_DEADZONE || std::abs(ly) > GAMEPAD_DEADZONE)
+			{
+				if (gPadGridCD <= 0)
+				{
+					int dx = 0, dy = 0;
+					if (std::abs(lx) > std::abs(ly))
+						dx = lx > GAMEPAD_DEADZONE ? 1 : -1;
+					else
+						dy = ly > GAMEPAD_DEADZONE ? 1 : -1;
+					gPadGridX = PadClamp(gPadGridX + dx, 0, MAX_GRID_SIZE_X - 1);
+					gPadGridY = PadClamp(gPadGridY + dy, 0, MAX_GRID_SIZE_Y - 1);
+					int cx = 0, cy = 0;
+					CellCenter(board, gPadGridX, gPadGridY, cx, cy);
+					wm->MouseMove(cx, cy);
+					gPadGridCD = GAMEPAD_REPEAT_MS;
+				}
+			}
+			else
+			{
+				gPadGridCD = 0;
+			}
+			if (gPadGridCD > 0)
+				gPadGridCD = (dt >= gPadGridCD) ? 0 : (gPadGridCD - dt);
+
+			// Auto-collect all suns and money on the board.
+			AutoCollectSun(board);
+
+			// Right stick: cycle the selected seed-bank packet.
+			if (!board->HasConveyorBeltSeedBank()
+				&& (std::abs(rx) > GAMEPAD_DEADZONE || std::abs(ry) > GAMEPAD_DEADZONE))
+			{
+				if (gPadSelCD <= 0)
+				{
+					int dir = (std::abs(ry) >= std::abs(rx))
+						? (ry > GAMEPAD_DEADZONE ? 1 : -1)
+						: (rx > GAMEPAD_DEADZONE ? 1 : -1);
+					gPadSelected = NextValidPacket(board, gPadSelected, dir);
+					board->mGamepadSelectedPacket = gPadSelected;
+					gPadSelCD = GAMEPAD_REPEAT_MS;
+				}
+			}
+			else
+			{
+				gPadSelCD = 0;
+			}
+			if (gPadSelCD > 0)
+				gPadSelCD = (dt >= gPadSelCD) ? 0 : (gPadSelCD - dt);
+
+			// Buttons: A = plant, B = shovel.
+			if (a && !gPadPrevA)
+				GamepadPlant(app, board);
+			if (b && !gPadPrevB)
+				GamepadShovel(app, board);
+		}
+		else
+		{
+			if (board)
+			{
+				board->mGamepadGridActive = false;
+				board->mGamepadSelectedPacket = -1;
+			}
+
+			// Left stick: free virtual cursor.
+			if (std::abs(lx) > GAMEPAD_DEADZONE || std::abs(ly) > GAMEPAD_DEADZONE)
+			{
+				gPadCursorX += (lx / 32767.0f) * GAMEPAD_MENU_SPEED * (dt / 1000.0f);
+				gPadCursorY += (ly / 32767.0f) * GAMEPAD_MENU_SPEED * (dt / 1000.0f);
+				gPadCursorX = PadClamp(gPadCursorX, 0.0f, (float)wm->mWidth);
+				gPadCursorY = PadClamp(gPadCursorY, 0.0f, (float)wm->mHeight);
+				wm->MouseMove((int)gPadCursorX, (int)gPadCursorY);
+			}
+
+			// A = left click, B = right click, Start = Escape (pause menu).
+			int px = (int)gPadCursorX, py = (int)gPadCursorY;
+			if (a && !gPadPrevA)
+			{
+				wm->MouseMove(px, py);
+				wm->MouseDown(px, py, 1);
+				wm->MouseUp(px, py, 1);
+			}
+			if (b && !gPadPrevB)
+			{
+				wm->MouseMove(px, py);
+				wm->MouseDown(px, py, -1);
+				wm->MouseUp(px, py, -1);
+			}
+			if (start && !gPadPrevStart)
+			{
+				wm->KeyDown(KEYCODE_ESCAPE);
+				wm->KeyUp(KEYCODE_ESCAPE);
+			}
+		}
+
+		gPadPrevA = a;
+		gPadPrevB = b;
+		gPadPrevStart = start;
+	}
+}
+
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
 
@@ -318,7 +620,9 @@ static bool SDLSynthesizeAsciiCharFromKeyDown(const SDL_KeyboardEvent& theEvent,
 
 void SexyAppBase::InitInput()
 {
-	SDL_Init(SDL_INIT_EVENTS);
+	SDL_Init(SDL_INIT_EVENTS | SDL_INIT_GAMECONTROLLER);
+	GamepadLoadMappings();
+	GamepadTryOpen();
 }
 
 bool SexyAppBase::StartTextInput(std::string& theInput)
@@ -369,6 +673,20 @@ bool SexyAppBase::ProcessDeferredMessages(bool singleMessage)
 		{
 			case SDL_QUIT:
 				CloseRequestAsync();
+				break;
+
+			case SDL_CONTROLLERDEVICEADDED:
+				if (!gGamepad)
+					gGamepad = SDL_GameControllerOpen(event.cdevice.which);
+				break;
+
+			case SDL_CONTROLLERDEVICEREMOVED:
+				if (gGamepad && SDL_GameControllerGetAttached(gGamepad)
+					&& SDL_JoystickInstanceID(SDL_GameControllerGetJoystick(gGamepad)) == event.cdevice.which)
+				{
+					SDL_GameControllerClose(gGamepad);
+					gGamepad = nullptr;
+				}
 				break;
 
 			case SDL_APP_WILLENTERBACKGROUND:
@@ -513,6 +831,8 @@ bool SexyAppBase::ProcessDeferredMessages(bool singleMessage)
 				break;
 		}
 	}
+
+	GamepadUpdate();
 
 	return SDL_HasEvents(SDL_FIRSTEVENT, SDL_LASTEVENT);
 }

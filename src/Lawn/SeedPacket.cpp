@@ -677,6 +677,12 @@ void SeedPacket::Draw(Graphics* g)
 
 		DrawSeedPacket(g, mOffsetX, 0.0f, mPacketType, mImitaterType, aPercentDark, aGrayness, aDrawCost, true);
 	}
+
+	if (mPacketType != SeedType::SEED_NONE && mBoard->mGamepadSelectedPacket == mIndex)
+	{
+		g->SetColor(Color(255, 255, 0, 220));
+		g->DrawRect((int)mOffsetX, 0, SEED_PACKET_WIDTH, SEED_PACKET_HEIGHT);
+	}
 }
 
 bool SeedPacket::CanPickUp()
