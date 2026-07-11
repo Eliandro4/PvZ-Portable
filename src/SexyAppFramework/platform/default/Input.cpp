@@ -86,6 +86,13 @@ namespace
 		// (https://github.com/mdqinc/SDL_GameControllerDB/blob/master/gamecontrollerdb.txt).
 		// Drop a `gamecontrollerdb.txt` next to the executable (or in the working directory)
 		// to get correct button/axis mappings for a wider range of gamepads.
+#ifdef __ANDROID__
+		// On Android the DB is bundled as an APK asset, which SDL's
+		// SDL_RWFromFile reads straight out of the .apk.
+		SDL_RWops* rw = SDL_RWFromFile("gamecontrollerdb.txt", "rb");
+		if (rw)
+			SDL_GameControllerAddMappingsFromRW(rw, 1);
+#else
 		char* basePath = SDL_GetBasePath();
 		if (basePath)
 		{
@@ -94,6 +101,7 @@ namespace
 			SDL_free(basePath);
 		}
 		SDL_GameControllerAddMappingsFromFile("gamecontrollerdb.txt");
+#endif
 	}
 
 	static void GamepadTryOpen()

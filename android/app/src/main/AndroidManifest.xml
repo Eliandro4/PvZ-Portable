@@ -6,6 +6,15 @@
         android:glEsVersion="0x00020000"
         android:required="true" />
 
+    <!-- Gamepads (wired/OTG and Bluetooth). Not required: the game is
+         fully playable with touch input mapped to the mouse. -->
+    <uses-feature
+        android:name="android.hardware.gamepad"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.usb.host"
+        android:required="false" />
+
     <application
         android:allowBackup="true"
         android:extractNativeLibs="false"
@@ -33,6 +42,14 @@
             <meta-data
                 android:name="android.app.shortcuts"
                 android:resource="@xml/shortcuts" />
+
+            <!-- Let SDL's SDLControllerManager open wired/OTG USB gamepads. -->
+            <intent-filter>
+                <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
+            </intent-filter>
+            <meta-data
+                android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
+                android:resource="@xml/usb_device_filter" />
         </activity>
 
         <activity

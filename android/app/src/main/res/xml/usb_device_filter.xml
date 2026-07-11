@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Matches any USB HID device that exposes a gamepad/joystick interface
+     (HID usage page 0x01, usage 0x05 = Game Pad / 0x04 = Joystick).
+     This lets SDL's SDLControllerManager claim wired/OTG controllers. -->
+<resources>
+    <usb-device class="1" subclass="0" protocol="0" />
+</resources>

@@ -278,58 +278,68 @@ jobs:
       run: |
         # On Android, SDL2 MUST be a shared library because the Java-side
         # SDLActivity loads it via System.loadLibrary("SDL2").
-        cmake -B build-sdl2 \
-          -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK/build/cmake/android.toolchain.cmake \
-          -DANDROID_ABI=arm64-v8a \
-          -DANDROID_PLATFORM=android-$ANDROID_API \
-          -DSDL_SHARED=ON \
-          -DSDL_STATIC=OFF \
-          -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/sdl2-android \
-          -DCMAKE_BUILD_TYPE=Release \
-          sdl2-src
-        cmake --build build-sdl2 -j$(nproc)
-        cmake --install build-sdl2
+        for ABI in arm64-v8a armeabi-v7a; do
+          cmake -B build-sdl2-$ABI \
+            -DCMAKE_TOOLCHAIN_FILE=$ANDROID_NDK/build/cmake/android.toolchain.cmake \
+            -DANDROID_ABI=$ABI \
+            -DANDROID_PLATFORM=android-28 \
+            -DSDL_SHARED=ON \
+            -DSDL_STATIC=OFF \
+            -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/sdl2-android-$ABI \
+            -DCMAKE_BUILD_TYPE=Release \
+            sdl2-src
+          cmake --build build-sdl2-$ABI -j$(nproc)
+          cmake --install build-sdl2-$ABI
+        done
 
     - name: Build Native Library with CMake
       run: |
-        ABI=arm64-v8a
-        BUILD_DIR=build-android-$ABI
-        SDL2_PREFIX=$GITHUB_WORKSPACE/sdl2-android
+        for ABI in arm64-v8a armeabi-v7a; do
+          ANDROID_API=28
+          BUILD_DIR=build-android-$ABI
+          SDL2_PREFIX=$GITHUB_WORKSPACE/sdl2-android-$ABI
 
-        cmake -B $BUILD_DIR \
-          -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake \
-          -DVCPKG_TARGET_TRIPLET=arm64-android \
-          -DVCPKG_CMAKE_SYSTEM_VERSION=$ANDROID_API \
-          -DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=$ANDROID_NDK/build/cmake/android.toolchain.cmake \
-          -DANDROID_ABI=$ABI \
-          -DANDROID_PLATFORM=android-$ANDROID_API \
-          -DSDL2_DIR=$SDL2_PREFIX/lib/cmake/SDL2 \
-          -DCMAKE_BUILD_TYPE=Release
+          if [ "$ABI" = "arm64-v8a" ]; then
+            VCPKG_TRIPLET=arm64-android
+          else
+            VCPKG_TRIPLET=arm-neon-android
+          fi
 
-        cmake --build $BUILD_DIR -j$(nproc)
+          cmake -B $BUILD_DIR \
+            -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake \
+            -DVCPKG_TARGET_TRIPLET=$VCPKG_TRIPLET \
+            -DVCPKG_CMAKE_SYSTEM_VERSION=$ANDROID_API \
+            -DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=$ANDROID_NDK/build/cmake/android.toolchain.cmake \
+            -DANDROID_ABI=$ABI \
+            -DANDROID_PLATFORM=android-$ANDROID_API \
+            -DSDL2_DIR=$SDL2_PREFIX/lib/cmake/SDL2 \
+            -DCMAKE_BUILD_TYPE=Release
 
-        # Collect all shared libraries into jniLibs for Gradle to package
-        JNILIBS=android/app/src/main/jniLibs/$ABI
-        mkdir -p $JNILIBS
-        cp -L $BUILD_DIR/libmain.so $JNILIBS/
+          cmake --build $BUILD_DIR -j$(nproc)
 
-        # Copy SDL2 shared library
-        cp -L $SDL2_PREFIX/lib/libSDL2*.so $JNILIBS/
+          # Collect all shared libraries into jniLibs for Gradle to package
+          JNILIBS=android/app/src/main/jniLibs/$ABI
+          mkdir -p $JNILIBS
+          cp -L $BUILD_DIR/libmain.so $JNILIBS/
 
-        # Copy any .so dependencies from vcpkg (manifest mode installs into build dir)
-        VCPKG_LIB=$BUILD_DIR/vcpkg_installed/arm64-android/lib
-        for so in "$VCPKG_LIB"/*.so; do
-          [ -f "$so" ] && cp -L "$so" $JNILIBS/
+          # Copy SDL2 shared library
+          cp -L $SDL2_PREFIX/lib/libSDL2*.so $JNILIBS/
+
+          # Copy any .so dependencies from vcpkg (manifest mode installs into build dir)
+          VCPKG_LIB=$BUILD_DIR/vcpkg_installed/$VCPKG_TRIPLET/lib
+          for so in "$VCPKG_LIB"/*.so; do
+            [ -f "$so" ] && cp -L "$so" $JNILIBS/
+          done
+
+          # Strip debug symbols to reduce APK size
+          STRIP=$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip
+          for so in "$JNILIBS"/*.so; do
+            "$STRIP" --strip-unneeded "$so"
+          done
+
+          echo "Collected .so files for $ABI:"
+          ls -lh $JNILIBS/
         done
-
-        # Strip debug symbols to reduce APK size
-        STRIP=$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-strip
-        for so in "$JNILIBS"/*.so; do
-          "$STRIP" --strip-unneeded "$so"
-        done
-
-        echo "Collected .so files:"
-        ls -lh $JNILIBS/
 
     - name: Build APK with Gradle
       run: |
@@ -343,13 +353,25 @@ jobs:
     - name: Copy APK
       run: |
         mkdir -p dist
-        find android -name "*.apk" -path "*/release/*" -exec cp {} dist/pvz-portable-android-arm64-v8a.apk \;
+        find android -name "*-release.apk" -path "*/release/*" -exec cp {} dist/pvz-portable-android-universal.apk \;
+        ls -lh dist/
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v7
       with:
         name: pvz-portable-android
         path: dist/
+
+    - name: Upload to GitHub Releases
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v2
+      with:
+        files: dist/*
+        generate_release_notes: true
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   build-ios:
     name: Build for iOS (arm64)
@@ -398,6 +420,17 @@ jobs:
       with:
         name: pvz-portable-ios
         path: dist/
+
+    - name: Upload to GitHub Releases
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v2
+      with:
+        files: dist/*
+        generate_release_notes: true
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   build-wasm:
     name: Build for WebAssembly (Emscripten)
@@ -487,8 +520,10 @@ jobs:
         zip -r -y ../../release_files/pvz-portable-macos-aarch64.zip .
         cd ../..
 
-        echo "Preparing Android file..."
-        mv artifacts/pvz-portable-android/pvz-portable-android-arm64-v8a.apk release_files/pvz-portable-android-arm64-v8a.apk
+        echo "Preparing Android files..."
+        for apk in artifacts/pvz-portable-android/*.apk; do
+          [ -f "$apk" ] && mv "$apk" "release_files/$(basename "$apk")"
+        done
 
         echo "Preparing iOS file..."
         mv artifacts/pvz-portable-ios/pvz-portable-ios-arm64.ipa release_files/pvz-portable-ios-arm64.ipa
