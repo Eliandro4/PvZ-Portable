@@ -308,6 +308,10 @@ SexyAppBase::SexyAppBase()
 	mEnableMaximizeButton = false;
 	mWriteToSexyCache = true;
 	mSexyCacheBuffers = false;
+	mGamepadPointerActive = false;
+	mGamepadHideCursor = false;
+	mGamepadPointerX = 0;
+	mGamepadPointerY = 0;
 
 	mMusicVolume = 0.85;
 	mSfxVolume = 0.85;
@@ -1763,6 +1767,55 @@ bool SexyAppBase::DrawDirtyStuff()
 	bool drewScreen = mWidgetManager->DrawScreen();
 	mIsDrawing = false;
 
+	if (mGamepadPointerActive && mGLInterface != nullptr)
+	{
+		// Draw a game-rendered pointer at the gamepad-controlled position.
+		// Force a full redraw next frame so the previous pointer position is cleared.
+		Graphics g(mGLInterface->GetScreenImage());
+		static const int aArrow[7][2] = { {0,0}, {0,16}, {4,12}, {7,18}, {9,17}, {6,11}, {11,11} };
+		int aBaseX = mGamepadPointerX;
+		int aBaseY = mGamepadPointerY;
+
+		// Fill the arrow interior black using a scanline polygon fill.
+		int aMinY = aArrow[0][1], aMaxY = aArrow[0][1];
+		for (int i = 1; i < 7; i++)
+		{
+			if (aArrow[i][1] < aMinY) aMinY = aArrow[i][1];
+			if (aArrow[i][1] > aMaxY) aMaxY = aArrow[i][1];
+		}
+		g.SetColor(Color(0, 0, 0, 255));
+		for (int y = aMinY; y <= aMaxY; y++)
+		{
+			int aXs[14];
+			int aCount = 0;
+			for (int i = 0; i < 7; i++)
+			{
+				int j = (i + 1) % 7;
+				int y1 = aArrow[i][1], y2 = aArrow[j][1];
+				int x1 = aArrow[i][0], x2 = aArrow[j][0];
+				if ((y1 <= y && y2 > y) || (y2 <= y && y1 > y))
+					aXs[aCount++] = (int)(x1 + (double)(y - y1) / (y2 - y1) * (x2 - x1));
+			}
+			std::sort(aXs, aXs + aCount);
+			for (int k = 0; k + 1 < aCount; k += 2)
+			{
+				int aStart = aXs[k], aEnd = aXs[k + 1];
+				if (aStart > aEnd) std::swap(aStart, aEnd);
+				g.FillRect(aBaseX + aStart, aBaseY + y, aEnd - aStart + 1, 1);
+			}
+		}
+
+		// Draw a white outline around the arrow.
+		g.SetColor(Color(255, 255, 255, 255));
+		for (int i = 0; i < 7; i++)
+		{
+			int j = (i + 1) % 7;
+			g.DrawLine(aBaseX + aArrow[i][0], aBaseY + aArrow[i][1],
+					   aBaseX + aArrow[j][0], aBaseY + aArrow[j][1]);
+		}
+		mWidgetManager->MarkDirtyFull();
+	}
+
 	if ((drewScreen || (aStartTime - mLastDrawTick >= 1000) || (mCustomCursorDirty)) &&
 		(static_cast<int>(aStartTime - mNextDrawTick) >= 0))
 	{
@@ -2439,7 +2492,7 @@ void SexyAppBase::EnforceCursor()
 	if (aCursor != nullptr)
 		SDL_SetCursor(aCursor);
 
-	SDL_ShowCursor(SDL_ENABLE);
+		SDL_ShowCursor(SDL_ENABLE);
 }
 
 void SexyAppBase::ProcessSafeDeleteList()

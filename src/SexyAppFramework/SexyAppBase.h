@@ -258,6 +258,14 @@ public:
 	SDL_Cursor*				mCustomCursor;
 	Image*					mCustomCursorImage;
 	int						mCustomCursorImageNum;
+
+	// Gamepad virtual pointer (set by the SDL gamepad backend).
+	// mGamepadPointerActive: draw a game-rendered pointer (used in menu mode).
+	// mGamepadHideCursor: hide the OS cursor whenever a gamepad is connected.
+	bool					mGamepadPointerActive;
+	bool					mGamepadHideCursor;
+	int						mGamepadPointerX;
+	int						mGamepadPointerY;
 	SoundManager*			mSoundManager;
 	WidgetSafeDeleteList	mSafeDeleteList;
 	bool					mMouseIn;	

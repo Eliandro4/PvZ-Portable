@@ -43,7 +43,7 @@ namespace
 {
 	constexpr int GAMEPAD_DEADZONE = 8000;
 	constexpr int GAMEPAD_REPEAT_MS = 180;
-	constexpr float GAMEPAD_MENU_SPEED = 700.0f; // pixels per second
+	constexpr float GAMEPAD_MENU_SPEED = 350.0f; // pixels per second
 
 	static SDL_GameController* gGamepad = nullptr;
 
@@ -182,14 +182,19 @@ namespace
 
 	static void GamepadUpdate()
 	{
-		if (!gGamepad)
-			return;
-
 		LawnApp* app = gLawnApp;
 		if (!app || !app->mWidgetManager)
 			return;
 
+		if (!gGamepad)
+		{
+			app->mGamepadPointerActive = false;
+			app->mGamepadHideCursor = false;
+			return;
+		}
+
 		WidgetManager* wm = app->mWidgetManager;
+		app->mGamepadHideCursor = true;
 		Uint32 now = SDL_GetTicks();
 		Uint32 dt = gPadLastTick ? (now - gPadLastTick) : 16;
 		gPadLastTick = now;
@@ -281,6 +286,14 @@ namespace
 			if (gPadSelCD > 0)
 				gPadSelCD = (dt >= gPadSelCD) ? 0 : (gPadSelCD - dt);
 
+			// Gamepad pointer follows the current grid cell (battle mode shows
+			// no cursor; the grid highlight + plant preview are the indicators).
+			int pcx = 0, pcy = 0;
+			CellCenter(board, gPadGridX, gPadGridY, pcx, pcy);
+			app->mGamepadPointerX = pcx;
+			app->mGamepadPointerY = pcy;
+			app->mGamepadPointerActive = false;
+
 			// Buttons: A = plant, B = shovel.
 			if (a && !gPadPrevA)
 				GamepadPlant(app, board);
@@ -304,6 +317,11 @@ namespace
 				gPadCursorY = PadClamp(gPadCursorY, 0.0f, (float)wm->mHeight);
 				wm->MouseMove((int)gPadCursorX, (int)gPadCursorY);
 			}
+
+			// Gamepad pointer follows the virtual cursor.
+			app->mGamepadPointerX = (int)gPadCursorX;
+			app->mGamepadPointerY = (int)gPadCursorY;
+			app->mGamepadPointerActive = true;
 
 			// A = left click, B = right click, Start = Escape (pause menu).
 			int px = (int)gPadCursorX, py = (int)gPadCursorY;
