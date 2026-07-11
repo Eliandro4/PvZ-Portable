@@ -223,11 +223,8 @@ _pkginfo.txt
 *.appxbundle
 *.appxupload
 
-# Visual Studio cache files
-# files ending in .cache can be ignored
+# Cache files and directories
 *.[Cc]ache
-# but keep track of directories ending in .cache
-!?*.[Cc]ache/
 
 # Others
 ClientBin/
