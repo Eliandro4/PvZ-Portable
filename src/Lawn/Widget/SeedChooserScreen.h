@@ -92,6 +92,10 @@ public:
     SeedChooserState        mChooseState;
     int                     mViewLawnTime;
 
+    int                     mGamepadChooserCol;
+    int                     mGamepadChooserRow;
+    bool                    mGamepadChooserActive;
+
 public:
     SeedChooserScreen();
     ~SeedChooserScreen() override;

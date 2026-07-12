@@ -54,6 +54,9 @@ SeedChooserScreen::SeedChooserScreen()
 	mLastMouseY = -1;
 	mChooseState = CHOOSE_NORMAL;
 	mViewLawnTime = 0;
+	mGamepadChooserCol = 0;
+	mGamepadChooserRow = 0;
+	mGamepadChooserActive = false;
 	mToolTip = new ToolTipWidget();
 	mToolTip->mMaxLinesWidth = mApp->GetInteger("SEED_CHOOSER_SCREEN_TOOL_TIP_MAX_LINE_WIDTH", 0);
 	mToolTipSeed = -1;
@@ -425,6 +428,19 @@ void SeedChooserScreen::Draw(Graphics* g)
 		if (mApp->HasSeedType(aSeedType) && (aSeedState == SEED_FLYING_TO_BANK || aSeedState == SEED_FLYING_TO_CHOOSER))
 		{
 			DrawSeedPacket(g, aChosenSeed.mX, aChosenSeed.mY, aChosenSeed.mSeedType, aChosenSeed.mImitaterType, 0, 255, true, false);
+		}
+	}
+
+	if (mGamepadChooserActive)
+	{
+		SeedType aGamepadSeed = (SeedType)(mGamepadChooserRow * 8 + mGamepadChooserCol);
+		if (aGamepadSeed != SEED_NONE && mApp->HasSeedType(aGamepadSeed))
+		{
+			int x = 0, y = 0;
+			GetSeedPositionInChooser((int)aGamepadSeed, x, y);
+			g->SetColor(GetFlashingColor(mSeedChooserAge, 50));
+			g->DrawRect(x - 1, y - 1, SEED_PACKET_WIDTH + 2, SEED_PACKET_HEIGHT + 2);
+			g->SetColor(Color(0, 0, 0, 255));
 		}
 	}
 

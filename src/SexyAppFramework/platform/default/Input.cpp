@@ -36,6 +36,9 @@
 #include "Lawn/Board.h"
 #include "Lawn/CursorObject.h"
 #include "Lawn/SeedPacket.h"
+#include "Lawn/Widget/SeedChooserScreen.h"
+#include "Lawn/Widget/GameButton.h"
+#include "GameConstants.h"
 
 using namespace Sexy;
 
@@ -68,6 +71,12 @@ namespace
 	static Uint32 gPadSelCD = 0;
 	static Uint32 gPadLastTick = 0;
 	static bool gPadWasBattle = false;
+
+	// Currently highlighted cell in the Seed Chooser grid (column, row).
+	static int gPadChooserCol = 0;
+	static int gPadChooserRow = 0;
+	static bool gPadWasChooser = false;
+	static bool gPadChooserDialog = false;
 
 	static inline int PadClamp(int v, int lo, int hi) { return v < lo ? lo : (v > hi ? hi : v); }
 
@@ -144,6 +153,75 @@ namespace
 			if (!coin->mDead && !coin->mIsBeingCollected && (coin->IsSun() || coin->IsMoney()))
 				coin->MouseDown((int)coin->mPosX, (int)coin->mPosY, 1);
 		}
+	}
+
+	static int ChooserNumSeeds(LawnApp* app)
+	{
+		return app->mSeedChooserScreen->Has7Rows() ? 48 : 40;
+	}
+
+	static bool ChooserIsSelectable(LawnApp* app, SeedChooserScreen* sc, int col, int row)
+	{
+		int idx = row * 8 + col;
+		if (idx < 0 || idx > 48)
+			return false;
+		SeedType st = (SeedType)idx;
+		if (!app->HasSeedType(st))
+			return false;
+		if (idx < 48 && idx >= ChooserNumSeeds(app))
+			return false;
+		ChosenSeed& cs = sc->mChosenSeeds[st];
+		if (cs.mSeedState == SEED_PACKET_HIDDEN)
+			return false;
+		if (sc->SeedNotAllowedToPick(st))
+			return false;
+		return true;
+	}
+
+	static void ChooserFirstSelectable(LawnApp* app, SeedChooserScreen* sc, int& col, int& row)
+	{
+		for (int r = 0; r < 7; r++)
+		{
+			for (int c = 0; c < 8; c++)
+			{
+				if (ChooserIsSelectable(app, sc, c, r))
+				{
+					col = c;
+					row = r;
+					return;
+				}
+			}
+		}
+		col = 0;
+		row = 0;
+	}
+
+	static bool ChooserStep(LawnApp* app, SeedChooserScreen* sc, int& col, int& row, int dx, int dy)
+	{
+		int nc = col, nr = row;
+		for (int step = 0; step < 14; step++)
+		{
+			nc = PadClamp(nc + dx, 0, 7);
+			nr = PadClamp(nr + dy, 0, 6);
+			if (nc == col && nr == row)
+				break;
+			if (ChooserIsSelectable(app, sc, nc, nr))
+			{
+				col = nc;
+				row = nr;
+				return true;
+			}
+		}
+		return false;
+	}
+
+	static void ChooserCellCenter(LawnApp* app, SeedChooserScreen* sc, int col, int row, int& cx, int& cy)
+	{
+		SeedType st = (SeedType)(row * 8 + col);
+		int lx = 0, ly = 0;
+		sc->GetSeedPositionInChooser((int)st, lx, ly);
+		cx = lx + SEED_PACKET_WIDTH / 2;
+		cy = ly + SEED_PACKET_HEIGHT / 2;
 	}
 
 	static void GamepadPlant(LawnApp* app, Board* board)
@@ -230,6 +308,8 @@ namespace
 			&& app->GetDialogCount() == 0
 			&& !board->mPaused
 			&& board->mBoardFadeOutCounter < 0;
+
+		bool chooser = app->mSeedChooserScreen != nullptr;
 
 		if (battle && !gPadWasBattle)
 		{
@@ -335,9 +415,148 @@ namespace
 				wm->KeyDown(KEYCODE_ESCAPE);
 				wm->KeyUp(KEYCODE_ESCAPE);
 			}
+			gPadWasChooser = false;
+		}
+		else if (chooser)
+		{
+			SeedChooserScreen* sc = app->mSeedChooserScreen;
+
+			// While a dialog (e.g. the options menu) is open, fall back to the
+			// free virtual cursor so the user can navigate the dialog normally.
+			if (app->GetDialogCount() > 0)
+			{
+				if (!gPadChooserDialog)
+				{
+					int cx = 0, cy = 0;
+					ChooserCellCenter(app, sc, gPadChooserCol, gPadChooserRow, cx, cy);
+					gPadCursorX = (float)cx;
+					gPadCursorY = (float)cy;
+					gPadChooserDialog = true;
+				}
+				gPadWasChooser = false;
+				gPadGridCD = 0;
+
+				if (board)
+				{
+					board->mGamepadGridActive = false;
+					board->mGamepadSelectedPacket = -1;
+				}
+				sc->mGamepadChooserActive = false;
+
+				// Left stick: free virtual cursor.
+				if (std::abs(lx) > GAMEPAD_DEADZONE || std::abs(ly) > GAMEPAD_DEADZONE)
+				{
+					gPadCursorX += (lx / 32767.0f) * GAMEPAD_MENU_SPEED * (dt / 1000.0f);
+					gPadCursorY += (ly / 32767.0f) * GAMEPAD_MENU_SPEED * (dt / 1000.0f);
+					gPadCursorX = PadClamp(gPadCursorX, 0.0f, (float)wm->mWidth);
+					gPadCursorY = PadClamp(gPadCursorY, 0.0f, (float)wm->mHeight);
+					wm->MouseMove((int)gPadCursorX, (int)gPadCursorY);
+				}
+
+				app->mGamepadPointerX = (int)gPadCursorX;
+				app->mGamepadPointerY = (int)gPadCursorY;
+				app->mGamepadPointerActive = true;
+
+				// A = click, B = right click, Start = Escape (close dialog).
+				int px = (int)gPadCursorX, py = (int)gPadCursorY;
+				if (a && !gPadPrevA)
+				{
+					wm->MouseMove(px, py);
+					wm->MouseDown(px, py, 1);
+					wm->MouseUp(px, py, 1);
+				}
+				if (b && !gPadPrevB)
+				{
+					wm->MouseMove(px, py);
+					wm->MouseDown(px, py, -1);
+					wm->MouseUp(px, py, -1);
+				}
+				if (start && !gPadPrevStart)
+				{
+					wm->KeyDown(KEYCODE_ESCAPE);
+					wm->KeyUp(KEYCODE_ESCAPE);
+				}
+			}
+			else
+			{
+				gPadChooserDialog = false;
+
+				if (!gPadWasChooser)
+					ChooserFirstSelectable(app, sc, gPadChooserCol, gPadChooserRow);
+				gPadWasChooser = true;
+
+				// Left stick: grid navigation (discrete, with auto-repeat).
+				if (std::abs(lx) > GAMEPAD_DEADZONE || std::abs(ly) > GAMEPAD_DEADZONE)
+				{
+					if (gPadGridCD <= 0)
+					{
+						int dx = 0, dy = 0;
+						if (std::abs(lx) > std::abs(ly))
+							dx = lx > GAMEPAD_DEADZONE ? 1 : -1;
+						else
+							dy = ly > GAMEPAD_DEADZONE ? 1 : -1;
+						ChooserStep(app, sc, gPadChooserCol, gPadChooserRow, dx, dy);
+						gPadGridCD = GAMEPAD_REPEAT_MS;
+					}
+				}
+				else
+				{
+					gPadGridCD = 0;
+				}
+				if (gPadGridCD > 0)
+					gPadGridCD = (dt >= gPadGridCD) ? 0 : (gPadGridCD - dt);
+
+			// Move the virtual cursor onto the highlighted cell so the hover
+			// highlight, tooltip and the gamepad border all track it.
+			int hcx = 0, hcy = 0;
+			ChooserCellCenter(app, sc, gPadChooserCol, gPadChooserRow, hcx, hcy);
+			wm->MouseMove(hcx, hcy);
+			app->mGamepadPointerX = hcx;
+			app->mGamepadPointerY = hcy;
+			app->mGamepadPointerActive = false;
+
+				// Expose the highlighted cell for rendering a selection border.
+				sc->mGamepadChooserCol = gPadChooserCol;
+				sc->mGamepadChooserRow = gPadChooserRow;
+				sc->mGamepadChooserActive = true;
+
+				// A = select (if in chooser) or deselect (if already in bank).
+				if (a && !gPadPrevA)
+				{
+					if (sc->mSeedsInFlight == 0 && sc->mChooseState == CHOOSE_NORMAL)
+					{
+						SeedType st = (SeedType)(gPadChooserRow * 8 + gPadChooserCol);
+						if (st != SEED_NONE && app->HasSeedType(st))
+						{
+							ChosenSeed& cs = sc->mChosenSeeds[st];
+							if (cs.mSeedState == SEED_IN_BANK && !cs.mCrazyDavePicked)
+								sc->ClickedSeedInBank(cs);
+							else if (cs.mSeedState == SEED_IN_CHOOSER)
+								sc->ClickedSeedInChooser(cs);
+						}
+					}
+				}
+
+				// B = "Let's Rock" button.
+				if (b && !gPadPrevB)
+				{
+					int bx = sc->mStartButton->mX + sc->mStartButton->mWidth / 2;
+					int by = sc->mStartButton->mY + sc->mStartButton->mHeight / 2;
+					wm->MouseMove(bx, by);
+					wm->MouseDown(bx, by, 1);
+					wm->MouseUp(bx, by, 1);
+				}
+
+				// Start = open the menu (options).
+				if (start && !gPadPrevStart)
+				{
+					sc->ButtonDepress(104); // SeedChooserScreen::SeedChooserScreen_Menu
+				}
+			}
 		}
 		else
 		{
+			gPadWasChooser = false;
 			if (board)
 			{
 				board->mGamepadGridActive = false;
