@@ -104,17 +104,40 @@ namespace
 #endif
 	}
 
+	static int ControllerAxisCount(int i)
+	{
+		SDL_GameController* ctrl = SDL_GameControllerOpen(i);
+		if (!ctrl)
+			return 0;
+		SDL_Joystick* joy = SDL_GameControllerGetJoystick(ctrl);
+		int axes = joy ? SDL_JoystickNumAxes(joy) : 0;
+		SDL_GameControllerClose(ctrl);
+		return axes;
+	}
+
 	static void GamepadTryOpen()
 	{
 		if (gGamepad)
 			return;
+		int best = -1;
+		int bestAxes = -1;
 		for (int i = 0; i < SDL_NumJoysticks(); i++)
 		{
-			if (SDL_IsGameController(i))
+			if (!SDL_IsGameController(i))
+				continue;
+			int axes = ControllerAxisCount(i);
+			if (axes <= bestAxes)
+				continue;
+			best = i;
+			bestAxes = axes;
+		}
+		if (best >= 0)
+		{
+			gGamepad = SDL_GameControllerOpen(best);
+			if (gGamepad && !SDL_GameControllerGetAttached(gGamepad))
 			{
-				gGamepad = SDL_GameControllerOpen(i);
-				if (gGamepad)
-					break;
+				SDL_GameControllerClose(gGamepad);
+				gGamepad = nullptr;
 			}
 		}
 	}
@@ -298,6 +321,15 @@ namespace
 
 		if (!gGamepad)
 		{
+			app->mGamepadPointerActive = false;
+			app->mGamepadHideCursor = false;
+			return;
+		}
+
+		if (!SDL_GameControllerGetAttached(gGamepad))
+		{
+			SDL_GameControllerClose(gGamepad);
+			gGamepad = nullptr;
 			app->mGamepadPointerActive = false;
 			app->mGamepadHideCursor = false;
 			return;
@@ -956,10 +988,27 @@ bool SexyAppBase::ProcessDeferredMessages(bool singleMessage)
 				CloseRequestAsync();
 				break;
 
-			case SDL_CONTROLLERDEVICEADDED:
-				if (!gGamepad)
+		case SDL_CONTROLLERDEVICEADDED:
+			if (!gGamepad)
+			{
+				gGamepad = SDL_GameControllerOpen(event.cdevice.which);
+			}
+			else if (!SDL_GameControllerGetAttached(gGamepad))
+			{
+				SDL_GameControllerClose(gGamepad);
+				gGamepad = SDL_GameControllerOpen(event.cdevice.which);
+			}
+			else
+			{
+				int curAxes = SDL_JoystickNumAxes(SDL_GameControllerGetJoystick(gGamepad));
+				int newAxes = ControllerAxisCount(event.cdevice.which);
+				if (newAxes > curAxes)
+				{
+					SDL_GameControllerClose(gGamepad);
 					gGamepad = SDL_GameControllerOpen(event.cdevice.which);
-				break;
+				}
+			}
+			break;
 
 			case SDL_CONTROLLERDEVICEREMOVED:
 				if (gGamepad && SDL_GameControllerGetAttached(gGamepad)

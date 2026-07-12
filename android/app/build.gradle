@@ -69,10 +69,14 @@ android {
         prefab true
     }
 
-    packaging {
+    packagingOptions {
         jniLibs {
             useLegacyPackaging true
         }
+    }
+
+    aaptOptions {
+        noCompress "txt"
     }
 
     splits {
