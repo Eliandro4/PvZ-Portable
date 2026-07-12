@@ -294,11 +294,16 @@ namespace
 			app->mGamepadPointerY = pcy;
 			app->mGamepadPointerActive = false;
 
-			// Buttons: A = plant, B = shovel.
+			// Buttons: A = plant, B = shovel, Start = Escape (pause menu).
 			if (a && !gPadPrevA)
 				GamepadPlant(app, board);
 			if (b && !gPadPrevB)
 				GamepadShovel(app, board);
+			if (start && !gPadPrevStart)
+			{
+				wm->KeyDown(KEYCODE_ESCAPE);
+				wm->KeyUp(KEYCODE_ESCAPE);
+			}
 		}
 		else
 		{
