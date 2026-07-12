@@ -10,6 +10,12 @@
         android:glEsVersion="0x00020000"
         android:required="true" />
 
+    <!-- Android TV support. required=false keeps the app installable on
+         phones/tablets that don't report the leanback feature. -->
+    <uses-feature
+        android:name="android.software.leanback"
+        android:required="false" />
+
     <!-- Gamepads (wired/OTG and Bluetooth). Not required: the game is
          fully playable with touch input mapped to the mouse. -->
     <uses-feature
@@ -29,6 +35,7 @@
         android:hasFragileUserData="true"
         android:enableOnBackInvokedCallback="true"
         android:supportsRtl="true"
+        android:banner="@drawable/banner"
         android:networkSecurityConfig="@xml/network_security_config">
 
         <activity
@@ -38,12 +45,15 @@
             android:exported="true"
             android:hardwareAccelerated="true"
             android:launchMode="singleInstance"
-            android:screenOrientation="userLandscape">
+            android:screenOrientation="userLandscape"
+            android:banner="@drawable/banner">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+                <!-- Makes the app show up in the Android TV home menu. -->
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
-            
+
             <meta-data
                 android:name="android.app.shortcuts"
                 android:resource="@xml/shortcuts" />
