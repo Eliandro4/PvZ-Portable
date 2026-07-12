@@ -180,6 +180,30 @@ namespace
 		board->mCursorObject->mCursorType = CursorType::CURSOR_TYPE_NORMAL;
 	}
 
+	static bool GamepadTryCollectReward(Board* board)
+	{
+		int left = board->GridToPixelX(gPadGridX, gPadGridY);
+		int top = board->GridToPixelY(gPadGridX, gPadGridY);
+		int cellH = (board->StageHasPool() || board->StageHasRoof()) ? 85 : 100;
+		int right = left + 80;
+		int bottom = top + cellH;
+
+		Coin* coin = nullptr;
+		while (board->mCoins.IterateNext(coin))
+		{
+			if (coin->mDead || coin->mIsBeingCollected || !coin->IsLevelAward())
+				continue;
+			int cx = (int)coin->mPosX + coin->mWidth / 2;
+			int cy = (int)coin->mPosY + coin->mHeight / 2;
+			if (cx >= left && cx < right && cy >= top && cy < bottom)
+			{
+				coin->MouseDown((int)coin->mPosX, (int)coin->mPosY, 1);
+				return true;
+			}
+		}
+		return false;
+	}
+
 	static void GamepadUpdate()
 	{
 		LawnApp* app = gLawnApp;
@@ -294,13 +318,20 @@ namespace
 			app->mGamepadPointerY = pcy;
 			app->mGamepadPointerActive = false;
 
-			// Buttons: A = plant, B = shovel, Start = Escape (pause menu).
+			// Buttons: A = collect reward / plant, B = shovel, Start = Escape (pause menu).
 			if (a && !gPadPrevA)
-				GamepadPlant(app, board);
+			{
+				if (!GamepadTryCollectReward(board))
+					GamepadPlant(app, board);
+			}
 			if (b && !gPadPrevB)
 				GamepadShovel(app, board);
 			if (start && !gPadPrevStart)
 			{
+				// Clear any held plant (grid mode leaves the cursor in
+				// PLANT_FROM_BANK) so Escape opens the options menu instead of
+				// just cancelling the selection.
+				board->mCursorObject->mCursorType = CursorType::CURSOR_TYPE_NORMAL;
 				wm->KeyDown(KEYCODE_ESCAPE);
 				wm->KeyUp(KEYCODE_ESCAPE);
 			}
