@@ -38,7 +38,6 @@
             android:visibility="gone"
             android:layout_marginBottom="16dp" />
 
-        <!-- Import game resources section -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -51,57 +50,30 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/import_help"
+            android:text="@string/import_help_url"
             android:textSize="13sp"
             android:textColor="#FFCCCCCC"
             android:layout_marginBottom="12dp" />
 
-        <Button
-            android:id="@+id/btn_pick_zip"
+        <EditText
+            android:id="@+id/url_input"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/btn_pick_zip"
-            android:layout_marginBottom="8dp" />
-
-        <Button
-            android:id="@+id/btn_pick_dir"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/btn_pick_dir"
-            android:layout_marginBottom="24dp" />
-
-        <!-- Save data section -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/section_save_data"
-            android:textSize="18sp"
-            android:textStyle="bold"
+            android:inputType="textUri"
+            android:hint="@string/url_hint"
             android:textColor="#FFFFFFFF"
+            android:textColorHint="#FFAAAAAA"
+            android:background="#FF33691E"
+            android:padding="12dp"
             android:layout_marginBottom="8dp" />
 
         <Button
-            android:id="@+id/btn_export_save"
+            android:id="@+id/btn_download_import"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/btn_export_save"
-            android:layout_marginBottom="8dp" />
-
-        <Button
-            android:id="@+id/btn_import_save_zip"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/btn_import_save_zip"
-            android:layout_marginBottom="8dp" />
-
-        <Button
-            android:id="@+id/btn_import_save_dir"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/btn_import_save_dir"
+            android:text="@string/btn_download_import"
             android:layout_marginBottom="32dp" />
 
-        <!-- Launch -->
         <Button
             android:id="@+id/btn_launch_game"
             android:layout_width="match_parent"

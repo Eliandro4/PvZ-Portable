@@ -2,27 +2,20 @@
 <resources>
     <string name="app_name">PvZ Portable</string>
 
-    <!-- ResourceImportActivity -->
     <string name="status_ready">Game resources found. Ready to play!</string>
-    <string name="status_missing">Game resources not found.\nPlease import main.pak + properties/ to continue.</string>
+    <string name="status_missing">Game resources not found.\nEnter a URL to download main.pak + properties/ ZIP.</string>
 
     <string name="section_import_resources">Import Game Resources</string>
-    <string name="import_help">Select a ZIP file or a folder that contains legally purchased copy of main.pak and the properties/ directory.</string>
-    <string name="btn_pick_zip">Select ZIP File</string>
-    <string name="btn_pick_dir">Select Resource Folder</string>
-
-    <string name="section_save_data">Import/Export Save Data (Optional)</string>
-    <string name="btn_export_save">Export Save Data</string>
-    <string name="btn_import_save_zip">Import Save ZIP</string>
-    <string name="btn_import_save_dir">Import Save Folder</string>
+    <string name="import_help_url">Enter a direct link to a ZIP file containing legally purchased copy of main.pak and the properties/ directory.</string>
+    <string name="url_hint">https://example.com/pvz-resources.zip</string>
+    <string name="btn_download_import">Download &amp; Import</string>
 
     <string name="btn_launch_game">Start Game</string>
 
     <string name="import_success">Import completed successfully!</string>
     <string name="import_failed">Import failed: %1$s</string>
-    <string name="export_success">Save data exported successfully!</string>
-    <string name="export_failed">Export failed: %1$s</string>
-    <string name="no_save_data">No save data found to export.</string>
-    <string name="shortcut_manage_data">Manage Data</string>
-    <string name="shortcut_manage_data_long">Manage Resources &amp; Saves</string>
+    <string name="enter_url">Please enter a URL first.</string>
+
+    <string name="shortcut_import_resources">Import Resources</string>
+    <string name="shortcut_import_resources_long">Download game resources from URL</string>
 </resources>
