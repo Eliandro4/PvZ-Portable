@@ -24,6 +24,8 @@
 
 #define MAX_POTTED_PLANTS 200
 #define PURCHASE_COUNT_OFFSET 1000
+#define ZOMBATAR_RECORD_SIZE 0x48
+#define MAX_ZOMBATAR_HEADS 100
 
 #include <cstdint>
 #include <ctime>
@@ -102,7 +104,7 @@ public:
     unsigned char       mZombatarAccepted;                  //+GOTY: 0x28
     uint32_t            mZombatarHeadCount;                 //+GOTY: 0x29
     std::vector<unsigned char> mZombatarData;               // raw 0x48 * count
-    unsigned char       mZombatarTrailingUnknown[0x14];     // unknown bytes after Zombatars
+    // mini-game completion flags (20 bytes in the save after the Zombatar records) are derived from mChallengeRecords at save time; no runtime field
     unsigned char       mZombatarCreatedBefore;             // created at least one Zombatar (0/1)
 
 public:

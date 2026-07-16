@@ -22,6 +22,7 @@
 #include "../Board.h"
 #include "GameButton.h"
 #include "StoreScreen.h"
+#include "ZombatarWidget.h"
 #include "../ZenGarden.h"
 #include "GameSelector.h"
 #include "../../LawnApp.h"
@@ -61,6 +62,7 @@ GameSelector::GameSelector(LawnApp* theApp)
 {
 	TodHesitationTrace("pregameselector");
 	mLoadedResourceNames.push_back("DelayLoad_Zombatar");
+	mLoadedResourceNames.push_back("DelayLoad_Almanac");
 
 	for (std::string& resource : mLoadedResourceNames)
 		TodLoadResources(resource.c_str());
@@ -354,8 +356,7 @@ GameSelector::GameSelector(LawnApp* theApp)
 	mStartY = 0;
 	mDestX = 0;
 	mDestY = 0;
-	//mZombatarWidget = new ZombatarWidget(this);
-	//mZombatarWidget->Resize(800, 0, mApp->mWidth, mApp->mHeight);
+	mZombatarWidget = new ZombatarWidget(this);
 	mAchievementsWidget = new AchievementsWidget(this->mApp);
 	mAchievementsWidget->Move(0, mApp->mHeight);
 
@@ -391,8 +392,8 @@ GameSelector::~GameSelector()
 	// @Patoke: new widgets
 	if (mZombatarButton)
 		delete mZombatarButton;
-	//if (mZombatarWidget) // todo @Patoke: add zombatar
-	//	delete mZombatarWidget;
+	if (mZombatarWidget)
+		delete mZombatarWidget;
 	if (mAchievementsButton)
 		delete mAchievementsButton;
 	if (mAchievementsWidget)
@@ -789,6 +790,7 @@ void GameSelector::Update()
 
 		// @Patoke: not from the original binaries but fixes bugs
 		mOverlayWidget->Move(aNewX, aNewY);
+		mZombatarWidget->Move(aNewX + BOARD_WIDTH, aNewY);
 		mAchievementsWidget->mY = aNewY + mApp->mHeight;
 		mAdventureButton->SetOffset(aNewX, aNewY);
 		mMinigameButton->SetOffset(aNewX, aNewY);
@@ -1028,7 +1030,7 @@ void GameSelector::AddedToManager(WidgetManager* theWidgetManager)
 	theWidgetManager->AddWidget(mChangeUserButton);
 	theWidgetManager->AddWidget(mOverlayWidget);
 	theWidgetManager->AddWidget(mZombatarButton); // @Patoke: add new widgets
-	//theWidgetManager->AddWidget(mZombatarWidget);
+	theWidgetManager->AddWidget(mZombatarWidget);
 	theWidgetManager->AddWidget(mAchievementsButton);
 	theWidgetManager->AddWidget(mAchievementsWidget);
 	//theWidgetManager->AddWidget(mQuickPlayButton);
@@ -1051,7 +1053,7 @@ void GameSelector::RemovedFromManager(WidgetManager* theWidgetManager)
 	theWidgetManager->RemoveWidget(mChangeUserButton);
 	theWidgetManager->RemoveWidget(mOverlayWidget);
 	theWidgetManager->RemoveWidget(mZombatarButton); // @Patoke: new widgets
-	//theWidgetManager->RemoveWidget(mZombatarWidget);
+	theWidgetManager->RemoveWidget(mZombatarWidget);
 	theWidgetManager->RemoveWidget(mAchievementsButton);
 	theWidgetManager->RemoveWidget(mAchievementsWidget);
 	//theWidgetManager->RemoveWidget(mQuickPlayButton);
@@ -1074,6 +1076,7 @@ void GameSelector::OrderInManagerChanged()
 	mWidgetManager->PutInfront(mChangeUserButton, this);
 	mWidgetManager->PutInfront(mZombatarButton, this); // @Patoke: z order for new widgets
 	mWidgetManager->PutInfront(mAchievementsButton, this);
+	mWidgetManager->BringToFront(mZombatarWidget);
 	//mWidgetManager->PutInfront(mQuickPlayButton, this);
 }
 
@@ -1369,10 +1372,7 @@ void GameSelector::ButtonDepress(int theId)
 			mApp->mZenGarden->SetupForZenTutorial();
 		break;
 	case GameSelector::GameSelector_Zombatar:
-		//if (mApp->mPlayerInfo->mAckZombatarTOS)
-		//	GameSelector::ShowZombatarScreen();
-		//else
-		//	LawnApp::ShowZombatarTOS();
+		ShowZombatarScreen();
 		break;
 	case GameSelector::GameSelector_AchievementsBack: // @Patoke: seems to be unused
 		//SlideTo(0, 0);
@@ -1491,7 +1491,8 @@ void GameSelector::AddPreviewProfiles()
 
 // @Patoke: implemented functions
 // GOTY @Patoke: 0x450140
-void GameSelector::SlideTo(int theX, int theY) {
+void GameSelector::SlideTo(int theX, int theY)
+{
 	if (mSlideCounter > 0)
 		return;
 
@@ -1502,8 +1503,19 @@ void GameSelector::SlideTo(int theX, int theY) {
 	mStartY = mY;
 }
 
+void GameSelector::ShowZombatarScreen()
+{
+	if (!mZombatarWidget)
+		return;
+	if (mApp->mPlayerInfo && !mApp->mPlayerInfo->mZombatarAccepted)
+		mApp->ShowZombatarTOS();
+	else
+		mZombatarWidget->Open();
+}
+
 // GOTY @Patoke: 0x450200
-void GameSelector::ShowAchievementsScreen() {
+void GameSelector::ShowAchievementsScreen()
+{
 	SlideTo(0, -mApp->mHeight);
 	mWidgetManager->SetFocus(mAchievementsWidget);
 }
