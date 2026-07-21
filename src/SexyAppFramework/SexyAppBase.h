@@ -308,11 +308,14 @@ public:
 	int						mLastDemoMouseY;
 	int						mLastDemoUpdateCnt;
 	uint64_t				mDemoStartTime; // wall clock at session start, base of the demo-synced clock
+	int32_t					mDemoTimeZoneOffset; // recorder's local time minus UTC in seconds, for demo-synced local time
 	bool					mDemoNeedsCommand;
 	bool					mDemoIsShortCmd;
 	int						mDemoCmdNum;
 	int						mDemoCmdOrder;
 	int						mDemoCmdBitPos;
+	int						mDemoCmdUpdateCnt; // update tick before the current command header was read
+	int						mDemoQueuedSince; // tick when a game-logic-owned command was queued; -1 = none
 	bool					mDemoLoadingComplete;
 
 	typedef std::pair<std::string, int> DemoMarker;
@@ -396,12 +399,28 @@ protected:
 	inline bool				IsOnPrimaryThread() const { return std::this_thread::get_id() == mPrimaryThreadId; } // demo-synced IO is primary-thread only
 
 public:
+	// True while recording or playing back a demo session
+	inline bool				IsInDemoMode() const { return mRecordingDemoBuffer || mPlayingDemoBuffer; }
+
 	// Demo-synced wall clock: real time normally; session start time advanced by update ticks during demo record/playback
 	inline time_t			GetNowTime() const
 	{
-		if (mRecordingDemoBuffer || mPlayingDemoBuffer)
+		if (IsInDemoMode())
 			return static_cast<time_t>(mDemoStartTime) + mUpdateCount / 100;
 		return time(nullptr);
+	}
+
+	// Demo-synced local time: localtime normally; during demo sessions the recorder's timezone is applied via UTC offset
+	inline tm				GetLocalTime(time_t theTime) const
+	{
+		if (IsInDemoMode())
+		{
+			time_t aShifted = theTime + static_cast<time_t>(mDemoTimeZoneOffset);
+			if (aShifted < 0) // MSVC/UCRT gmtime rejects pre-epoch times
+				aShifted = 0; // clamp to no earlier than 1970-01-01
+			return *gmtime(&aShifted);
+		}
+		return *localtime(&theTime);
 	}
 
 	SexyAppBase();

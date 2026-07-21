@@ -34,6 +34,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <cstring>
+#include <chrono>
 #include <filesystem>
 
 #include <SDL.h>
@@ -81,7 +82,7 @@
 using namespace Sexy;
 
 const int DEMO_FILE_ID = 0x42BEEF78;
-const int DEMO_VERSION = 4; // v4: header also carries the session start time for the demo-synced clock
+const int DEMO_VERSION = 5; // v5: header also carries the session timezone offset
 
 SexyAppBase* Sexy::gSexyAppBase = nullptr;
 
@@ -390,12 +391,15 @@ SexyAppBase::SexyAppBase()
 	mLastDemoMouseY = 0;
 	mLastDemoUpdateCnt = 0;
 	mDemoStartTime = 0;
+	mDemoTimeZoneOffset = 0;
 	mDemoNeedsCommand = true;
 	mDemoLoadingComplete = false;
 	mDemoLength = 0;
 	mDemoCmdNum = 0;
 	mDemoCmdOrder = -1; // Means we haven't processed any demo commands yet
 	mDemoCmdBitPos = 0;
+	mDemoCmdUpdateCnt = 0;
+	mDemoQueuedSince = -1;
 
 	mWidgetManager = new WidgetManager(this);
 	mResourceManager = new ResourceManager(this);
@@ -514,6 +518,10 @@ bool SexyAppBase::ReadDemoBuffer(std::string &theError)
 	if (!aFile.read(reinterpret_cast<char*>(&mDemoStartTime), sizeof(mDemoStartTime))) return false;
 	mDemoStartTime = FromLE64(mDemoStartTime);
 
+	uint32_t aTimeZoneOffsetLE;
+	if (!aFile.read(reinterpret_cast<char*>(&aTimeZoneOffsetLE), sizeof(aTimeZoneOffsetLE))) return false;
+	mDemoTimeZoneOffset = static_cast<int32_t>(FromLE32(aTimeZoneOffsetLE));
+
 	ushort aStrLen = 4;
 	if (!aFile.read(reinterpret_cast<char*>(&aStrLen), sizeof(aStrLen))) return false;
 	aStrLen = std::min<ushort>(FromLE16(aStrLen), 255);
@@ -618,6 +626,9 @@ void SexyAppBase::WriteDemoBuffer()
 
 			uint64_t aDemoStartTime = ToLE64(mDemoStartTime);
 			aFile.write(reinterpret_cast<const char*>(&aDemoStartTime), sizeof(aDemoStartTime));
+
+			uint32_t aTimeZoneOffsetLE = ToLE32(static_cast<uint32_t>(mDemoTimeZoneOffset));
+			aFile.write(reinterpret_cast<const char*>(&aTimeZoneOffsetLE), sizeof(aTimeZoneOffsetLE));
 
 			ushort aStrLen = ToLE16(static_cast<uint16_t>(mProductVersion.length()));
 			aFile.write(reinterpret_cast<const char*>(&aStrLen), sizeof(aStrLen));		
@@ -1653,10 +1664,10 @@ bool SexyAppBase::DoUpdateFrames()
 			LoadingThreadCompleted();
 		}
 
-		// Hrrm not sure why we check (mUpdateCount != mLastDemoUpdateCnt) here
-		if ((mLoaded == mDemoLoadingComplete) && (mUpdateCount != mLastDemoUpdateCnt))		
+		// a queued command waits on game logic; let the tick advance so it can be claimed or judged diverged
+		if ((mLoaded == mDemoLoadingComplete) && ((mUpdateCount != mLastDemoUpdateCnt) || (mDemoQueuedSince >= 0)))
 		{
-			UpdateFrames();		
+			UpdateFrames();
 			return true;
 		}
 
@@ -2049,6 +2060,9 @@ bool SexyAppBase::PrepareDemoCommand([[maybe_unused]] bool required)
 	if (mDemoNeedsCommand)
 	{
 		mDemoCmdBitPos = mDemoBuffer.mReadBitPos;
+		mDemoCmdUpdateCnt = mLastDemoUpdateCnt;
+		if (required) // a game-logic call site claimed the queued command
+			mDemoQueuedSince = -1;
 
 		mLastDemoUpdateCnt += mDemoBuffer.ReadNumBits(4, false);
 
@@ -2064,9 +2078,9 @@ bool SexyAppBase::PrepareDemoCommand([[maybe_unused]] bool required)
 		mDemoCmdOrder++;
 	}
 
-	DBG_ASSERTE((mUpdateCount == mLastDemoUpdateCnt) || (!required));
+	DBG_ASSERTE((mUpdateCount >= mLastDemoUpdateCnt) || (!required));
 
-	return mUpdateCount == mLastDemoUpdateCnt;
+	return mUpdateCount >= mLastDemoUpdateCnt;
 }
 
 void SexyAppBase::ProcessDemo()
@@ -2079,7 +2093,7 @@ void SexyAppBase::ProcessDemo()
 			return;
 		}
 
-		while ((!mShutdown) && (mUpdateCount == mLastDemoUpdateCnt) && (!mDemoBuffer.AtEnd()))
+		while ((!mShutdown) && (mUpdateCount >= mLastDemoUpdateCnt) && (!mDemoBuffer.AtEnd()))
 		{
 			if (PrepareDemoCommand(false))
 			{
@@ -2204,6 +2218,26 @@ void SexyAppBase::ProcessDemo()
 						break;
 					case DEMO_IDLE:
 						break;
+					case DEMO_REGISTRY_GETSUBKEYS:
+					case DEMO_REGISTRY_READ:
+					case DEMO_REGISTRY_WRITE:
+					case DEMO_REGISTRY_ERASE:
+					case DEMO_FILE_EXISTS:
+					case DEMO_FILE_READ:
+					case DEMO_FILE_WRITE:
+					case DEMO_SYNC:
+					case DEMO_ASSERT_STRING_EQUAL:
+					case DEMO_ASSERT_INT_EQUAL:
+						if (mDemoQueuedSince >= 0 && mUpdateCount > mDemoQueuedSince) // queued across a tick with no claim: the replay has diverged
+						{
+							Shutdown();
+							return;
+						}
+						mDemoQueuedSince = mUpdateCount;
+						mDemoBuffer.mReadBitPos = mDemoCmdBitPos; // leave queued for the game-logic call site to consume
+						mLastDemoUpdateCnt = mDemoCmdUpdateCnt;
+						mDemoNeedsCommand = true;
+						return;
 					default:
 						DBG_ASSERTE("Invalid Demo Command" == 0);
 						break;
@@ -3379,9 +3413,16 @@ void SexyAppBase::InitHook()
 {
 }
 
+// Seconds since 1970-01-01 00:00 for broken-down fields, timezone-agnostic
+static inline int64_t DemoWallSeconds(const tm& theTM)
+{
+	auto aDays = std::chrono::sys_days{std::chrono::year{theTM.tm_year + 1900} / (theTM.tm_mon + 1) / theTM.tm_mday};
+	return aDays.time_since_epoch().count() * 86400LL + theTM.tm_hour * 3600 + theTM.tm_min * 60 + theTM.tm_sec;
+}
+
 void SexyAppBase::Init()
 {
-	mPrimaryThreadId = std::this_thread::get_id();	
+	mPrimaryThreadId = std::this_thread::get_id();
 	
 	if (mShutdown)
 		return;
@@ -3464,7 +3505,12 @@ void SexyAppBase::Init()
 		SRand(mRandSeed);
 
 		if (mRecordingDemoBuffer)
-			mDemoStartTime = static_cast<uint64_t>(time(nullptr)); // synthetic clock base; mUpdateCount is still 0 here
+		{
+			time_t aNow = time(nullptr);
+			mDemoStartTime = static_cast<uint64_t>(aNow); // synthetic clock base; mUpdateCount is still 0 here
+			tm aLocalTM = *localtime(&aNow);
+			mDemoTimeZoneOffset = static_cast<int32_t>(DemoWallSeconds(aLocalTM) - aNow); // local minus UTC; pure arithmetic, exact around DST
+		}
 	}
 
 	srand(SDL_GetTicks());
