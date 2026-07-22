@@ -303,6 +303,8 @@ public:
 	bool					mManualShutdown;
 	std::string				mDemoPrefix;
 	std::string				mDemoFileName;
+	bool					mHasCustomDemoFile; // an explicit -demofile overrides automatic demo file selection
+	uint					mDemoRecordFileLimit;
 	Buffer					mDemoBuffer;
 	int						mDemoLength;
 	int						mLastDemoMouseX;

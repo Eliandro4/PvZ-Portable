@@ -47,6 +47,7 @@ A **cross-platform** community-driven reimplementation of Plants vs. Zombies: Ga
   - Theoretically supports big-endian platforms, but untested due to lack of hardware
 - [x] Unlockable **Hidden Limbo Page** with additional levels in the original game
   - To unlock it, open the Mini-Games / Puzzle / Survival selection screen and tap any blank area **5 times in rapid succession**
+- [x] **Record and deterministically replay** gameplay sessions — see [Recording and Playing Back Gameplay](#recording-and-playing-back-gameplay)
 
 This project supports the following platforms (including but not limited to):
 
@@ -310,6 +311,18 @@ python scripts/pvzp-v4-converter.py export ~/.local/io.github.wszqkzqk/PvZPortab
 mv ~/.local/io.github.wszqkzqk/PvZPortable/userdata/game1_13.v4 ~/.local/io.github.wszqkzqk/PvZPortable/userdata/game1_13.v4.bak
 python scripts/pvzp-v4-converter.py import level.yaml ~/.local/io.github.wszqkzqk/PvZPortable/userdata/game1_13.v4
 ```
+
+## Recording and Playing Back Gameplay
+
+The game can record a gameplay session into a `.dmo` demo file and replay it deterministically later. Automatically named demo files are written to the current working directory:
+
+- `-record` — record to a file named after the current local time, in the form `pvzp-YYYYMMDD-HHMMSS[-N].dmo`.
+- `-play` — play back the first matching `pvzp-*.dmo` recording in descending timestamp/name order.
+- `-playnum=<N>` — play back the N-th recording in descending timestamp/name order; `1` selects the first.
+- `-recnum=<N>` — record and keep the first `N` files matching the automatic timestamp pattern in descending timestamp/name order; other `pvzp-*.dmo` files are left untouched.
+- `-demofile="<path>"` — use an explicit file for `-record`, `-recnum`, `-play`, or `-playnum` instead; using an explicit target disables automatic retention.
+
+This feature is primarily designed for debugging and regression testing.
 
 ## Contributing
 
